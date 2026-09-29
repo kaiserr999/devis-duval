@@ -4,7 +4,7 @@ import os
 from flask import Flask
 
 from app.config import Config
-from app.extensions import db
+from app.extensions import db, migrate
 
 
 def create_app(config_class=Config):
@@ -16,12 +16,11 @@ def create_app(config_class=Config):
                 exist_ok=True)
 
     db.init_app(app)
+    # render_as_batch : SQLite ne sait pas modifier une table (ALTER)
+    migrate.init_app(app, db, render_as_batch=True)
 
     from app import models  # noqa: F401  (enregistre les modèles)
     from app.routes.health import health_bp
     app.register_blueprint(health_bp)
-
-    with app.app_context():
-        db.create_all()
 
     return app
