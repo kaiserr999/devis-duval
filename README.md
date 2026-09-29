@@ -47,14 +47,38 @@ run.py
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+export FLASK_APP=run.py
+flask db upgrade         # crée / met à jour la base SQLite
 python run.py            # http://localhost:5000/api/health
 ```
+
+## Migrations (Flask-Migrate / Alembic)
+
+Après toute modification d'un modèle :
+
+```bash
+flask db migrate -m "description du changement"
+# relire le fichier généré dans migrations/versions/
+flask db upgrade
+```
+
+Le test `tests/test_migrations.py` échoue si un modèle a été modifié sans
+migration correspondante.
 
 ## Docker
 
 ```bash
 docker compose up --build
 ```
+
+Le conteneur applique les migrations (`flask db upgrade`) au démarrage.
+
+## Intégration continue
+
+GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) lance
+`pycodestyle` et `pytest`, puis construit l'image Docker et vérifie
+`/api/health`, à chaque push sur `main`, `develop`, `feature/**` et à chaque
+pull request.
 
 ## Tests et style
 
