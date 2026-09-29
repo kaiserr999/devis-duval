@@ -11,6 +11,7 @@ def app():
     """Application configurée pour les tests, base en mémoire."""
     app = create_app(TestConfig)
     with app.app_context():
+        db.create_all()
         yield app
         db.session.remove()
         db.drop_all()
