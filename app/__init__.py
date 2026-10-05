@@ -21,6 +21,11 @@ def create_app(config_class=Config):
 
     from app import models  # noqa: F401  (enregistre les modèles)
     from app.routes.health import health_bp
+    from app.routes.clients import clients_bp
     app.register_blueprint(health_bp)
+    app.register_blueprint(clients_bp)
+
+    from app.errors import register_error_handlers
+    register_error_handlers(app)
 
     return app

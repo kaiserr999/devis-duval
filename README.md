@@ -22,7 +22,9 @@ app/
   config.py          Config (SQLite fichier) / TestConfig (SQLite mémoire)
   extensions.py      instance SQLAlchemy (+ PRAGMA foreign_keys pour SQLite)
   models/            Client, Devis, LigneDevis
+  errors.py          erreurs HTTP renvoyées en JSON {"erreur": "..."}
   routes/health.py   GET /api/health
+  routes/clients.py  CRUD /api/clients
 tests/               conftest.py, tests des modèles et des routes
 run.py
 ```
@@ -40,6 +42,46 @@ run.py
 - `statut` ∈ brouillon / envoye / accepte / refuse (défaut : brouillon).
 - `LigneDevis.calculer_sous_total()` et `Devis.calculer_total()` arrondissent
   au centime (`ROUND_HALF_UP`).
+
+## API
+
+Toutes les réponses sont en JSON. En cas d'erreur, le corps est
+`{"erreur": "message"}`.
+
+### Clients
+
+| Méthode  | Route               | Effet                                   | Succès |
+|----------|---------------------|-----------------------------------------|--------|
+| `GET`    | `/api/clients`      | Liste les clients (ordre alphabétique)  | 200    |
+| `POST`   | `/api/clients`      | Crée un client                          | 201    |
+| `GET`    | `/api/clients/<id>` | Affiche un client                       | 200    |
+| `PUT`    | `/api/clients/<id>` | Remplace un client (champ absent = vidé)| 200    |
+| `DELETE` | `/api/clients/<id>` | Supprime un client                      | 204    |
+
+Corps attendu pour `POST` et `PUT` :
+
+```json
+{
+  "nom": "Mme Martin",
+  "email": "martin@example.com",
+  "telephone": "06 12 34 56 78",
+  "adresse": "12 rue des Lilas, 69003 Lyon"
+}
+```
+
+- `nom` est obligatoire (120 caractères max) ; `email` (120), `telephone`
+  (30) et `adresse` (255) sont facultatifs. Les espaces autour sont retirés.
+- `id`, `cree_le` et les champs inconnus sont ignorés.
+- Erreurs : **400** (JSON absent ou champ invalide), **404** (client
+  introuvable), **409** (suppression d'un client qui a des devis).
+
+Exemple :
+
+```bash
+curl -X POST http://localhost:5000/api/clients \
+     -H "Content-Type: application/json" \
+     -d '{"nom": "Mme Martin", "email": "martin@example.com"}'
+```
 
 ## Installation locale
 
