@@ -49,8 +49,18 @@ source venv/bin/activate
 pip install -r requirements.txt
 export FLASK_APP=run.py
 flask db upgrade         # crée / met à jour la base SQLite
+flask seed               # insère des données de démo (clients, devis)
 python run.py            # http://localhost:5000/api/health
 ```
+
+## Données de démonstration
+
+`flask seed` insère 4 clients et 5 devis (12 lignes) dans la base, avec des
+totaux calculés par `calculer_total()`. La commande ne fait rien si la base
+contient déjà des clients ; `flask seed --reset` vide les tables puis
+réinsère les données.
+
+Avec Docker : `docker compose exec web flask seed`.
 
 ## Migrations (Flask-Migrate / Alembic)
 

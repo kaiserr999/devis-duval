@@ -23,4 +23,7 @@ def create_app(config_class=Config):
     from app.routes.health import health_bp
     app.register_blueprint(health_bp)
 
+    from app.seed import seed_command
+    app.cli.add_command(seed_command)
+
     return app
