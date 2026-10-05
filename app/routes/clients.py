@@ -1,22 +1,14 @@
 """Routes CRUD des clients."""
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, jsonify
 
 from app.extensions import db
 from app.models import Client
+from app.validation import lire_json
 
 clients_bp = Blueprint("clients", __name__, url_prefix="/api/clients")
 
 # Champs modifiables et longueur maximale (identique aux colonnes)
 CHAMPS = {"nom": 120, "email": 120, "telephone": 30, "adresse": 255}
-
-
-def lire_json():
-    """Renvoie le corps JSON de la requête, ou 400 s'il est invalide."""
-    donnees = request.get_json(silent=True)
-    if not isinstance(donnees, dict):
-        abort(400, description="Le corps de la requête doit être un "
-                               "objet JSON.")
-    return donnees
 
 
 def valider_client(donnees):
