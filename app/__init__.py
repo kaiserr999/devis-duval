@@ -30,4 +30,7 @@ def create_app(config_class=Config):
     from app.errors import register_error_handlers
     register_error_handlers(app)
 
+    from app.seed import seed_command
+    app.cli.add_command(seed_command)
+
     return app
