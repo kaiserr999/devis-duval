@@ -83,6 +83,50 @@ curl -X POST http://localhost:5000/api/clients \
      -d '{"nom": "Mme Martin", "email": "martin@example.com"}'
 ```
 
+### Devis
+
+| Méthode  | Route                    | Effet                                     | Succès |
+|----------|--------------------------|-------------------------------------------|--------|
+| `GET`    | `/api/devis`             | Liste les devis (`?client_id=`, `?statut=`) | 200  |
+| `POST`   | `/api/devis`             | Crée un devis en brouillon                | 201    |
+| `GET`    | `/api/devis/<id>`        | Affiche un devis et ses lignes            | 200    |
+| `PUT`    | `/api/devis/<id>`        | Remplace les lignes (brouillon seulement) | 200    |
+| `PATCH`  | `/api/devis/<id>/statut` | Fait avancer le statut                    | 200    |
+| `DELETE` | `/api/devis/<id>`        | Supprime le devis (brouillon seulement)   | 204    |
+
+Corps attendu pour `POST` (pour `PUT`, seulement `lignes`) :
+
+```json
+{
+  "client_id": 1,
+  "lignes": [
+    {"description": "Peinture salon (m²)", "quantite": "32.5", "prix_unitaire": "24.90"},
+    {"description": "Sous-couche", "quantite": 3, "prix_unitaire": "45.33"}
+  ]
+}
+```
+
+Règles :
+
+- **Le serveur calcule** `sous_total` et `total`. Le numéro est **généré
+  automatiquement** (`D-2026-0001`, `D-2026-0002`… par année) et le statut
+  de départ est `brouillon`. Les valeurs `total`, `sous_total`, `numero` et
+  `statut` envoyées par le client sont ignorées.
+- Montants : nombre ou chaîne (`"24.90"` recommandé), 2 décimales au
+  maximum. Quantité > 0, prix unitaire >= 0.
+- Statut, sans retour en arrière (corps : `{"statut": "envoye"}`) :
+
+  ```
+  brouillon ──> envoye ──> accepte
+                     └───> refuse
+  ```
+
+- Un devis sans ligne ne peut pas être envoyé.
+- Un devis qui n'est plus en brouillon ne peut plus être modifié ni
+  supprimé.
+- Erreurs : **400** (données invalides, client inexistant), **404** (devis
+  introuvable), **409** (action interdite pour ce statut).
+
 ## Installation locale
 
 ```bash
