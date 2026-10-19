@@ -25,6 +25,7 @@ app/
   errors.py          erreurs HTTP renvoyées en JSON {"erreur": "..."}
   routes/health.py   GET /api/health
   routes/clients.py  CRUD /api/clients
+  swagger.py         config Flasgger + schémas OpenAPI partagés
 tests/               conftest.py, tests des modèles et des routes
 run.py
 ```
@@ -138,6 +139,35 @@ flask db upgrade         # crée / met à jour la base SQLite
 flask seed               # insère des données de démo (clients, devis)
 python run.py            # http://localhost:5000/api/health
 ```
+
+Sous **Windows (PowerShell)**, pas besoin d'activer le venv (`Activate.ps1`
+est souvent bloqué par la politique d'exécution) : on appelle directement
+le Python du venv.
+
+```powershell
+py -m venv venv
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+$env:FLASK_APP = "run.py"
+.\venv\Scripts\flask.exe db upgrade
+.\venv\Scripts\flask.exe seed
+.\venv\Scripts\python.exe run.py   # http://localhost:5000/apidocs/
+```
+
+`ModuleNotFoundError: No module named 'flask'` : le serveur a été lancé avec
+le Python global au lieu de celui du venv. Port 5000 déjà utilisé : un autre
+serveur tourne déjà (le fermer, ou lancer avec `$env:PORT = "5001"`).
+
+## Documentation de l'API (Swagger)
+
+Une fois le serveur lancé :
+
+- **Swagger UI** : http://localhost:5000/apidocs/ (tester les routes depuis le navigateur)
+- **Spec OpenAPI brute** : http://localhost:5000/apispec.json
+
+La doc est générée par [Flasgger](https://github.com/flasgger/flasgger) à partir
+du bloc YAML (après `---`) dans la docstring de chaque route. Les schémas
+partagés (`Client`, `Devis`, `Ligne`, `Erreur`...) sont dans `app/swagger.py`.
+`tests/test_swagger.py` échoue si une route `/api/...` n'est pas documentée.
 
 ## Données de démonstration
 
