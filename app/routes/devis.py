@@ -103,6 +103,34 @@ def prochain_numero():
     return f"{prefixe}{dernier + 1:04d}"
 
 
+def nouveau_devis(client, donnees):
+    """Crée et enregistre un devis en brouillon pour ce client. Lève 400.
+
+    numero, statut et total envoyés par le client sont ignorés.
+    Le devis n'est rattaché au client qu'une fois les lignes validées.
+    """
+    devis = Devis(numero=prochain_numero(), statut="brouillon")
+    appliquer_lignes(devis, construire_lignes(donnees))
+    devis.client = client
+    db.session.add(devis)
+    db.session.commit()
+    return devis
+
+
+def appliquer_statut(devis, nouveau):
+    """Fait avancer le statut du devis et enregistre. Lève 400 ou 409."""
+    if nouveau not in STATUTS:
+        abort(400, description="Statut inconnu. Valeurs possibles : "
+                               + ", ".join(STATUTS) + ".")
+    if nouveau not in TRANSITIONS[devis.statut]:
+        abort(409, description=f"Passage de '{devis.statut}' à "
+                               f"'{nouveau}' interdit.")
+    if nouveau == "envoye" and not devis.lignes:
+        abort(409, description="Impossible d'envoyer un devis sans ligne.")
+    devis.statut = nouveau
+    db.session.commit()
+
+
 def trouver_devis(devis_id):
     """Renvoie le devis demandé, ou 404."""
     return db.get_or_404(Devis, devis_id, description="Devis introuvable.")
@@ -202,13 +230,7 @@ def creer_devis():
     if client is None:
         abort(400, description="Le client indiqué n'existe pas.")
 
-    # numero, statut et total envoyés par le client sont ignorés.
-    # Le devis n'est rattaché au client qu'une fois les lignes validées.
-    devis = Devis(numero=prochain_numero(), statut="brouillon")
-    appliquer_lignes(devis, construire_lignes(donnees))
-    devis.client = client
-    db.session.add(devis)
-    db.session.commit()
+    devis = nouveau_devis(client, donnees)
     return jsonify(devis.to_dict()), 201
 
 
@@ -324,17 +346,7 @@ def changer_statut(devis_id):
           $ref: '#/definitions/Erreur'
     """
     devis = trouver_devis(devis_id)
-    nouveau = lire_json().get("statut")
-    if nouveau not in STATUTS:
-        abort(400, description="Statut inconnu. Valeurs possibles : "
-                               + ", ".join(STATUTS) + ".")
-    if nouveau not in TRANSITIONS[devis.statut]:
-        abort(409, description=f"Passage de '{devis.statut}' à "
-                               f"'{nouveau}' interdit.")
-    if nouveau == "envoye" and not devis.lignes:
-        abort(409, description="Impossible d'envoyer un devis sans ligne.")
-    devis.statut = nouveau
-    db.session.commit()
+    appliquer_statut(devis, lire_json().get("statut"))
     return jsonify(devis.to_dict()), 200
 
 

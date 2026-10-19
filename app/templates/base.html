@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}Devis{% endblock %} · Peinture Duval</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="barre">
+    <div class="barre-contenu">
+      <a class="marque" href="{{ url_for('pages.liste_devis') }}">
+        <span class="marque-pastille" aria-hidden="true"></span>
+        Peinture Duval
+      </a>
+      <nav aria-label="Navigation principale">
+        {% set section = request.endpoint or '' %}
+        <a href="{{ url_for('pages.liste_devis') }}"
+           {% if 'devis' in section %}aria-current="page"{% endif %}>Devis</a>
+        <a href="{{ url_for('pages.liste_clients') }}"
+           {% if 'client' in section %}aria-current="page"{% endif %}>Clients</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenu">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for categorie, message in messages %}
+        <p class="alerte alerte-{{ categorie }}" role="status">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    {% block contenu %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

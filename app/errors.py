@@ -1,11 +1,13 @@
-"""Gestionnaires d'erreurs : toutes les erreurs de l'API en JSON."""
-from flask import jsonify
+"""Gestionnaires d'erreurs : JSON pour l'API, page HTML sinon."""
+from flask import jsonify, render_template, request
 from werkzeug.exceptions import HTTPException
 
 
 def register_error_handlers(app):
-    """Renvoie les erreurs HTTP sous la forme {"erreur": "..."}."""
+    """Erreurs HTTP : {"erreur": "..."} sous /api/, page d'erreur ailleurs."""
 
     @app.errorhandler(HTTPException)
     def erreur_http(erreur):
-        return jsonify({"erreur": erreur.description}), erreur.code
+        if request.path.startswith("/api/"):
+            return jsonify({"erreur": erreur.description}), erreur.code
+        return render_template("erreur.html", erreur=erreur), erreur.code

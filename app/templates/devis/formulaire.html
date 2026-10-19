@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titre %}{{ 'Nouveau devis' if devis is none else 'Modifier ' ~ devis.numero }}{% endblock %}
+{% block contenu %}
+<p>
+  {% if devis is none %}
+  <a href="{{ url_for('pages.liste_devis') }}">← Tous les devis</a>
+  {% else %}
+  <a href="{{ url_for('pages.detail_devis', devis_id=devis.id) }}">← Devis {{ devis.numero }}</a>
+  {% endif %}
+</p>
+<h1>{{ 'Nouveau devis' if devis is none else 'Modifier le devis ' ~ devis.numero }}</h1>
+
+{% if erreur %}<p class="alerte alerte-erreur" role="alert">{{ erreur }}</p>{% endif %}
+
+<form class="carte" method="post" id="formulaire-devis">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% if devis is none %}
+  <div class="champ">
+    <label for="client_id">Client <span class="obligatoire" aria-hidden="true">*</span></label>
+    {% if clients %}
+    <select id="client_id" name="client_id" required>
+      <option value="">Choisir un client…</option>
+      {% for c in clients %}
+      <option value="{{ c.id }}" {% if c.id == client_id %}selected{% endif %}>{{ c.nom }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <p class="aide">Aucun client : <a href="{{ url_for('pages.nouveau_client') }}">créez d'abord un client</a>.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="sous-titre">Client : <strong>{{ devis.client.nom }}</strong></p>
+  {% endif %}
+
+  <h2>Lignes</h2>
+  <div class="tableau-defilant">
+    <table class="lignes">
+      <thead>
+        <tr>
+          <th class="col-description">Description</th>
+          <th class="col-montant nombre">Quantité</th>
+          <th class="col-montant nombre">Prix unitaire (€)</th>
+          <th class="col-action"><span class="visuellement-cache">Retirer</span></th>
+        </tr>
+      </thead>
+      <tbody id="lignes">
+        {% for ligne in lignes %}
+        {% with description=ligne.description, quantite=ligne.quantite, prix=ligne.prix_unitaire %}
+          {% include "devis/_ligne.html" %}
+        {% endwith %}
+        {% endfor %}
+        {% if not lignes %}
+        {% with description='', quantite='', prix='' %}{% include "devis/_ligne.html" %}{% endwith %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <template id="modele-ligne">
+    {% with description='', quantite='', prix='' %}{% include "devis/_ligne.html" %}{% endwith %}
+  </template>
+
+  <div class="estimation">
+    <button class="bouton bouton-secondaire" type="button" id="ajouter-ligne">+ Ajouter une ligne</button>
+    <p class="aide" aria-live="polite">Total estimé : <strong id="total-estime">—</strong><br>
+      Le total définitif est calculé par le serveur à l'enregistrement.</p>
+  </div>
+
+  <div class="actions">
+    <button class="bouton" type="submit">{{ 'Créer le devis' if devis is none else 'Enregistrer' }}</button>
+    <a class="bouton bouton-secondaire"
+       href="{{ url_for('pages.liste_devis') if devis is none else url_for('pages.detail_devis', devis_id=devis.id) }}">Annuler</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var corps = document.getElementById("lignes");
+  var modele = document.getElementById("modele-ligne");
+  var total = document.getElementById("total-estime");
+
+  function lireNombre(texte) {
+    var propre = texte.replace(/[\s  ]/g, "").replace(",", ".");
+    return propre === "" ? NaN : Number(propre);
+  }
+
+  function majTotal() {
+    var somme = 0, valide = false;
+    corps.querySelectorAll("tr").forEach(function (tr) {
+      var q = lireNombre(tr.querySelector("[name=quantite]").value);
+      var p = lireNombre(tr.querySelector("[name=prix_unitaire]").value);
+      if (!isNaN(q) && !isNaN(p)) { somme += q * p; valide = true; }
+    });
+    total.textContent = valide
+      ? somme.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })
+      : "—";
+  }
+
+  document.getElementById("ajouter-ligne").addEventListener("click", function () {
+    corps.appendChild(modele.content.cloneNode(true));
+    var lignes = corps.querySelectorAll("tr");
+    lignes[lignes.length - 1].querySelector("input").focus();
+  });
+
+  corps.addEventListener("click", function (e) {
+    var bouton = e.target.closest(".retirer-ligne");
+    if (!bouton) return;
+    var tr = bouton.closest("tr");
+    if (corps.querySelectorAll("tr").length > 1) {
+      tr.remove();
+    } else {
+      tr.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+    }
+    majTotal();
+  });
+
+  corps.addEventListener("input", majTotal);
+  majTotal();
+})();
+</script>
+{% endblock %}

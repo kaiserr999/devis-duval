@@ -19,14 +19,19 @@ calculé côté serveur**, jamais saisi à la main.
 ```
 app/
   __init__.py        factory create_app()
-  config.py          Config (SQLite fichier) / TestConfig (SQLite mémoire)
-  extensions.py      instance SQLAlchemy (+ PRAGMA foreign_keys pour SQLite)
+  config.py          Config (lit .env) / TestConfig (SQLite mémoire)
+  extensions.py      SQLAlchemy (+ PRAGMA foreign_keys), Migrate, CSRFProtect
   models/            Client, Devis, LigneDevis
-  errors.py          erreurs HTTP renvoyées en JSON {"erreur": "..."}
+  errors.py          erreurs HTTP : JSON sous /api/, page HTML ailleurs
   routes/health.py   GET /api/health
   routes/clients.py  CRUD /api/clients
+  routes/devis.py    /api/devis : lignes, totaux, statuts
+  pages/             interface web (clients, devis) qui réutilise les règles de routes/
+  templates/         templates Jinja (base, clients/, devis/, erreur)
+  static/style.css   styles de l'interface
+  seed.py            commande flask seed (données de démo)
   swagger.py         config Flasgger + schémas OpenAPI partagés
-tests/               conftest.py, tests des modèles et des routes
+tests/               modèles, API, pages, config, Swagger
 run.py
 ```
 
@@ -158,6 +163,27 @@ $env:FLASK_APP = "run.py"
 `ModuleNotFoundError: No module named 'flask'` : le serveur a été lancé avec
 le Python global au lieu de celui du venv. Port 5000 déjà utilisé : un autre
 serveur tourne déjà (le fermer, ou lancer avec `$env:PORT = "5001"`).
+
+## Interface web
+
+Une fois le serveur lancé, ouvrir http://localhost:5000/ :
+
+| Page | URL |
+|---|---|
+| Liste des devis, filtrable par statut | `/devis` |
+| Nouveau devis (client + lignes, total estimé en direct) | `/devis/nouveau` |
+| Détail d'un devis, changement de statut | `/devis/<id>` |
+| Modifier / supprimer un devis (brouillon seulement) | `/devis/<id>/modifier` |
+| Liste des clients | `/clients` |
+| Fiche client (coordonnées + ses devis) | `/clients/<id>` |
+| Nouveau / modifier un client | `/clients/nouveau`, `/clients/<id>/modifier` |
+
+Les pages appliquent **les mêmes règles que l'API** (validation, total calculé
+par le serveur, cycle des statuts) : elles appellent les fonctions de
+`app/routes/`. Les montants se saisissent avec une virgule (`1 200,50`).
+Les formulaires sont protégés contre le CSRF (Flask-WTF). L'API n'en a pas
+besoin : elle n'accepte que du JSON, qu'un site tiers ne peut pas envoyer
+sans autorisation CORS.
 
 ## Documentation de l'API (Swagger)
 

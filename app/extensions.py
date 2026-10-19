@@ -1,11 +1,14 @@
 """Extensions Flask partagées."""
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 db = SQLAlchemy()
 migrate = Migrate()
+# Jeton CSRF exigé sur les formulaires des pages (pas sur l'API JSON)
+csrf = CSRFProtect()
 
 
 @event.listens_for(Engine, "connect")

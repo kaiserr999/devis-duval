@@ -33,6 +33,15 @@ def valider_client(donnees):
     return propres
 
 
+def supprimer(client):
+    """Supprime un client, ou lève 409 s'il a des devis."""
+    if client.devis:
+        abort(409, description="Ce client a des devis : il ne peut pas "
+                               "être supprimé.")
+    db.session.delete(client)
+    db.session.commit()
+
+
 def trouver_client(client_id):
     """Renvoie le client demandé, ou 404."""
     return db.get_or_404(Client, client_id,
@@ -165,10 +174,5 @@ def supprimer_client(client_id):
         schema:
           $ref: '#/definitions/Erreur'
     """
-    client = trouver_client(client_id)
-    if client.devis:
-        abort(409, description="Ce client a des devis : il ne peut pas "
-                               "être supprimé.")
-    db.session.delete(client)
-    db.session.commit()
+    supprimer(trouver_client(client_id))
     return "", 204

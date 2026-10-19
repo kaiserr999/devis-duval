@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titre %}Clients{% endblock %}
+{% block contenu %}
+<div class="entete">
+  <div class="entete-titre">
+    <h1>Clients</h1>
+    <p class="sous-titre">{{ clients|length }} client{{ 's' if clients|length > 1 }}</p>
+  </div>
+  <a class="bouton" href="{{ url_for('pages.nouveau_client') }}">+ Nouveau client</a>
+</div>
+
+{% if clients %}
+<div class="tableau-defilant">
+  <table>
+    <thead>
+      <tr><th>Nom</th><th>Email</th><th>Téléphone</th><th class="nombre">Devis</th></tr>
+    </thead>
+    <tbody>
+      {% for client in clients %}
+      <tr>
+        <td><a href="{{ url_for('pages.fiche_client', client_id=client.id) }}">{{ client.nom }}</a></td>
+        <td>{{ client.email or '' }}</td>
+        <td class="numero">{{ client.telephone or '' }}</td>
+        <td class="nombre">{{ client.devis|length }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="carte"><p class="vide">Aucun client pour l'instant.</p></div>
+{% endif %}
+{% endblock %}

@@ -32,4 +32,6 @@ class TestConfig(Config):
 
     TESTING = True
     SECRET_KEY = "cle-de-test"
+    # Formulaires postés sans jeton ; la protection CSRF a son propre test
+    WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"

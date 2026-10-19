@@ -5,7 +5,7 @@ from flasgger import Swagger
 from flask import Flask
 
 from app.config import CLE_DEV, Config
-from app.extensions import db, migrate
+from app.extensions import csrf, db, migrate
 from app.swagger import CONFIG, TEMPLATE
 
 
@@ -44,6 +44,12 @@ def create_app(config_class=Config):
     app.register_blueprint(health_bp)
     app.register_blueprint(clients_bp)
     app.register_blueprint(devis_bp)
+    for blueprint in (health_bp, clients_bp, devis_bp):
+        csrf.exempt(blueprint)
+    csrf.init_app(app)
+
+    from app.pages import pages_bp
+    app.register_blueprint(pages_bp)
 
     # Documentation interactive : /apidocs/ (spec brute : /apispec.json)
     Swagger(app, config=CONFIG, template=TEMPLATE)

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set creation = client is none %}
+{% block titre %}{{ 'Nouveau client' if creation else 'Modifier ' ~ client.nom }}{% endblock %}
+{% block contenu %}
+<p>
+  {% if creation %}
+  <a href="{{ url_for('pages.liste_clients') }}">← Tous les clients</a>
+  {% else %}
+  <a href="{{ url_for('pages.fiche_client', client_id=client.id) }}">← {{ client.nom }}</a>
+  {% endif %}
+</p>
+<h1>{{ 'Nouveau client' if creation else 'Modifier le client' }}</h1>
+
+{% if erreur %}<p class="alerte alerte-erreur" role="alert">{{ erreur }}</p>{% endif %}
+
+<form class="carte" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="champs">
+    <div class="champ champ-large">
+      <label for="nom">Nom <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="nom" name="nom" required maxlength="120" value="{{ valeurs.nom }}"
+             autocomplete="name" {% if creation %}autofocus{% endif %}>
+    </div>
+    <div class="champ">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" maxlength="120" value="{{ valeurs.email }}" autocomplete="email">
+    </div>
+    <div class="champ">
+      <label for="telephone">Téléphone</label>
+      <input id="telephone" name="telephone" type="tel" maxlength="30" value="{{ valeurs.telephone }}" autocomplete="tel">
+    </div>
+    <div class="champ champ-large">
+      <label for="adresse">Adresse</label>
+      <input id="adresse" name="adresse" maxlength="255" value="{{ valeurs.adresse }}" autocomplete="street-address">
+    </div>
+  </div>
+  <div class="actions">
+    <button class="bouton" type="submit">{{ 'Créer le client' if creation else 'Enregistrer' }}</button>
+    <a class="bouton bouton-secondaire"
+       href="{{ url_for('pages.liste_clients') if creation else url_for('pages.fiche_client', client_id=client.id) }}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

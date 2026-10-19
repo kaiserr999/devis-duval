@@ -1,0 +1,17 @@
+<tr>
+  <td class="col-description">
+    <input name="description" maxlength="255" value="{{ description }}"
+           aria-label="Description" placeholder="Ex. Peinture salon (m²)">
+  </td>
+  <td class="col-montant">
+    <input name="quantite" inputmode="decimal" value="{{ quantite }}"
+           aria-label="Quantité" placeholder="1" class="nombre">
+  </td>
+  <td class="col-montant">
+    <input name="prix_unitaire" inputmode="decimal" value="{{ prix }}"
+           aria-label="Prix unitaire en euros" placeholder="0,00" class="nombre">
+  </td>
+  <td class="col-action">
+    <button type="button" class="bouton-lien retirer-ligne" aria-label="Retirer cette ligne" title="Retirer cette ligne">✕</button>
+  </td>
+</tr>
