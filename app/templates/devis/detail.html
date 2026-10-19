@@ -13,6 +13,9 @@
     </p>
   </div>
   <div class="actions">
+    <a class="bouton bouton-secondaire" href="{{ url_for('pages.pdf_devis', devis_id=devis.id, apercu=1) }}"
+       target="_blank" rel="noopener">Aperçu PDF</a>
+    <a class="bouton bouton-secondaire" href="{{ url_for('pages.pdf_devis', devis_id=devis.id) }}">Télécharger le PDF</a>
     {% for statut, libelle in actions.items() %}
     <form method="post" action="{{ url_for('pages.changer_statut', devis_id=devis.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -1,10 +1,12 @@
 """Pages des devis : liste, détail, création, modification, statut."""
-from flask import flash, redirect, render_template, request, url_for
+from flask import Response, flash, redirect, render_template, request, \
+    url_for
 
 from app.extensions import db
 from app.models import Client, Devis
 from app.models.devis import STATUTS
 from app.pages import LIBELLES_STATUT, essayer, pages_bp
+from app.pdf import generer_pdf, nom_fichier
 from app.routes.devis import TRANSITIONS, appliquer_lignes, \
     appliquer_statut, construire_lignes, nouveau_devis, trouver_devis
 
@@ -91,6 +93,15 @@ def detail_devis(devis_id):
                for statut in sorted(TRANSITIONS[devis.statut])}
     return render_template("devis/detail.html", devis=devis,
                            actions=actions)
+
+
+@pages_bp.get("/devis/<int:devis_id>/pdf")
+def pdf_devis(devis_id):
+    """Télécharge le devis en PDF (?apercu=1 : l'ouvre dans le navigateur)."""
+    devis = trouver_devis(devis_id)
+    mode = "inline" if request.args.get("apercu") else "attachment"
+    return Response(generer_pdf(devis), mimetype="application/pdf", headers={
+        "Content-Disposition": f'{mode}; filename="{nom_fichier(devis)}"'})
 
 
 def exiger_brouillon(devis):

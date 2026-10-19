@@ -26,6 +26,17 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JSON_SORT_KEYS = False
 
+    # En-tête des devis PDF (entreprise fictive du projet Portfolio)
+    ENTREPRISE = {
+        "nom": "SARL Peinture Duval",
+        "adresse": "12 avenue des Artisans, 69007 Lyon",
+        "telephone": "04 78 00 00 00",
+        "email": "contact@peinture-duval.example.com",
+        "siret": "000 000 000 00000",
+    }
+    # Durée de validité affichée sur le devis
+    DEVIS_VALIDITE_JOURS = 30
+
 
 class TestConfig(Config):
     """Configuration des tests (SQLite en mémoire)."""

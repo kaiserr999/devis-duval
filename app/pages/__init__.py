@@ -31,9 +31,13 @@ def essayer(action, *args):
 
 @pages_bp.app_template_filter("euro")
 def euro(montant):
-    """1387.5 -> '1 387,50 €' (espace insécable, virgule décimale)."""
+    """1387.5 -> '1 387,50 €' (espace insécable, virgule décimale).
+
+    Espace insécable classique (U+00A0) : les polices de base du PDF
+    n'ont pas l'espace fine (U+202F).
+    """
     texte = f"{Decimal(str(montant or 0)):,.2f}"
-    return (texte.replace(",", " ").replace(".", ",")
+    return (texte.replace(",", " ").replace(".", ",")
             + " €")
 
 

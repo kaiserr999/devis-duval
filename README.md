@@ -27,6 +27,7 @@ app/
   routes/clients.py  CRUD /api/clients
   routes/devis.py    /api/devis : lignes, totaux, statuts
   pages/             interface web (clients, devis) qui réutilise les règles de routes/
+  pdf.py             génération du devis en PDF (xhtml2pdf)
   templates/         templates Jinja (base, clients/, devis/, erreur)
   static/style.css   styles de l'interface
   seed.py            commande flask seed (données de démo)
@@ -173,6 +174,7 @@ Une fois le serveur lancé, ouvrir http://localhost:5000/ :
 | Liste des devis, filtrable par statut | `/devis` |
 | Nouveau devis (client + lignes, total estimé en direct) | `/devis/nouveau` |
 | Détail d'un devis, changement de statut | `/devis/<id>` |
+| Devis en PDF (téléchargement, ou aperçu avec `?apercu=1`) | `/devis/<id>/pdf` |
 | Modifier / supprimer un devis (brouillon seulement) | `/devis/<id>/modifier` |
 | Liste des clients | `/clients` |
 | Fiche client (coordonnées + ses devis) | `/clients/<id>` |
@@ -184,6 +186,15 @@ par le serveur, cycle des statuts) : elles appellent les fonctions de
 Les formulaires sont protégés contre le CSRF (Flask-WTF). L'API n'en a pas
 besoin : elle n'accepte que du JSON, qu'un site tiers ne peut pas envoyer
 sans autorisation CORS.
+
+### Export PDF
+
+Le PDF est généré par [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf) (pur Python,
+rien à installer en plus sous Windows) à partir du template
+`app/templates/devis/pdf.html` : en-tête de l'entreprise, client, lignes, total,
+durée de validité et cadre « Bon pour accord ». Un devis en brouillon porte la
+mention BROUILLON. Les coordonnées de l'entreprise et la durée de validité sont
+dans `Config.ENTREPRISE` et `Config.DEVIS_VALIDITE_JOURS` (`app/config.py`).
 
 ## Documentation de l'API (Swagger)
 
