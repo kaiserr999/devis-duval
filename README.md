@@ -134,6 +134,7 @@ Règles :
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env       # puis remplir SECRET_KEY
 export FLASK_APP=run.py
 flask db upgrade         # crée / met à jour la base SQLite
 flask seed               # insère des données de démo (clients, devis)
@@ -147,6 +148,7 @@ le Python du venv.
 ```powershell
 py -m venv venv
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env   # puis remplir SECRET_KEY
 $env:FLASK_APP = "run.py"
 .\venv\Scripts\flask.exe db upgrade
 .\venv\Scripts\flask.exe seed
@@ -191,10 +193,23 @@ flask db upgrade
 Le test `tests/test_migrations.py` échoue si un modèle a été modifié sans
 migration correspondante.
 
+## Configuration (.env)
+
+Les secrets sont lus dans un fichier `.env` à la racine, jamais versionné.
+Modèle : [.env.example](.env.example).
+
+| Variable | Rôle |
+|---|---|
+| `SECRET_KEY` | Clé secrète Flask. **Obligatoire hors mode debug** : sans elle, ou avec la clé de dev, l'application refuse de démarrer. |
+| `FLASK_DEBUG` | `1` en développement (rechargement auto, clé de dev tolérée), `0` en production. |
+| `DATABASE_URL` | Optionnel, SQLite `instance/devis.db` par défaut. |
+
+Générer une clé : `python -c "import secrets; print(secrets.token_hex(32))"`
+
 ## Docker
 
 ```bash
-docker compose up --build
+docker compose up --build   # lit SECRET_KEY dans .env
 ```
 
 Le conteneur applique les migrations (`flask db upgrade`) au démarrage.

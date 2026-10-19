@@ -4,6 +4,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-a-changer}
+      # Lue depuis l'environnement ou le fichier .env (obligatoire)
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY manquante, voir .env.example}
     volumes:
       - ./instance:/app/instance

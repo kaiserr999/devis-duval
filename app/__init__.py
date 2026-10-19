@@ -4,15 +4,31 @@ import os
 from flasgger import Swagger
 from flask import Flask
 
-from app.config import Config
+from app.config import CLE_DEV, Config
 from app.extensions import db, migrate
 from app.swagger import CONFIG, TEMPLATE
+
+
+def verifier_secret_key(app):
+    """Exige SECRET_KEY hors debug ; clé de dev seulement en debug."""
+    cle = app.config.get("SECRET_KEY")
+    if cle and cle != CLE_DEV:
+        return
+    if app.debug:
+        app.config["SECRET_KEY"] = CLE_DEV
+        return
+    raise RuntimeError(
+        "SECRET_KEY manquante ou égale à la clé de développement. "
+        "Copier .env.example en .env et y mettre une clé secrète "
+        "(python -c \"import secrets; print(secrets.token_hex(32))\"), "
+        "ou lancer en debug avec FLASK_DEBUG=1.")
 
 
 def create_app(config_class=Config):
     """Crée et configure une instance de l'application."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    verifier_secret_key(app)
 
     os.makedirs(os.path.join(os.path.dirname(app.root_path), "instance"),
                 exist_ok=True)
