@@ -10,7 +10,10 @@ TEMPLATE = {
         "title": "API Devis Duval",
         "description": "Gestion des clients et des devis. Les montants "
                        "sont renvoyés en chaîne (ex. \"12.50\") et "
-                       "calculés par le serveur.",
+                       "calculés par le serveur. Toutes les routes sauf "
+                       "/api/health exigent d'être connecté : se connecter "
+                       "d'abord sur /connexion dans le même navigateur, "
+                       "sinon l'API répond 401.",
         "version": "1.0.0",
     },
     "consumes": ["application/json"],

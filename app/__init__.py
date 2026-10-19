@@ -5,7 +5,7 @@ from flasgger import Swagger
 from flask import Flask
 
 from app.config import CLE_DEV, Config
-from app.extensions import csrf, db, migrate
+from app.extensions import csrf, db, login_manager, migrate
 from app.swagger import CONFIG, TEMPLATE
 
 
@@ -50,6 +50,13 @@ def create_app(config_class=Config):
 
     from app.pages import pages_bp
     app.register_blueprint(pages_bp)
+
+    # Connexion du gérant : pages et API réservées (voir app/auth.py)
+    from app.auth import auth_bp, creer_gerant_command, exiger_connexion
+    login_manager.init_app(app)
+    app.register_blueprint(auth_bp)
+    app.before_request(exiger_connexion)
+    app.cli.add_command(creer_gerant_command)
 
     # Documentation interactive : /apidocs/ (spec brute : /apispec.json)
     Swagger(app, config=CONFIG, template=TEMPLATE)

@@ -20,8 +20,9 @@ calculé côté serveur**, jamais saisi à la main.
 app/
   __init__.py        factory create_app()
   config.py          Config (lit .env) / TestConfig (SQLite mémoire)
-  extensions.py      SQLAlchemy (+ PRAGMA foreign_keys), Migrate, CSRFProtect
-  models/            Client, Devis, LigneDevis
+  extensions.py      SQLAlchemy (+ PRAGMA foreign_keys), Migrate, CSRFProtect, LoginManager
+  models/            Client, Devis, LigneDevis, Utilisateur
+  auth.py            connexion du gérant (Flask-Login) + commande flask creer-gerant
   errors.py          erreurs HTTP : JSON sous /api/, page HTML ailleurs
   routes/health.py   GET /api/health
   routes/clients.py  CRUD /api/clients
@@ -32,7 +33,7 @@ app/
   static/style.css   styles de l'interface
   seed.py            commande flask seed (données de démo)
   swagger.py         config Flasgger + schémas OpenAPI partagés
-tests/               modèles, API, pages, config, Swagger
+tests/               modèles, API, pages, PDF, connexion, config, Swagger
 run.py
 ```
 
@@ -43,6 +44,7 @@ run.py
 | `clients`      | id, nom (obligatoire), email, telephone, adresse, cree_le                 |
 | `devis`        | id, client_id → clients, numero (unique), date_creation, statut, total    |
 | `lignes_devis` | id, devis_id → devis (ON DELETE CASCADE), description, quantite, prix_unitaire, sous_total |
+| `utilisateurs` | id, email (unique), mot_de_passe_hash, cree_le                            |
 
 - Montants en `DECIMAL(10,2)` et `decimal.Decimal` en Python, jamais en float.
 - `CHECK (quantite > 0)` et `CHECK (prix_unitaire >= 0)`.
@@ -141,11 +143,13 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env       # puis remplir SECRET_KEY
-export FLASK_APP=run.py
 flask db upgrade         # crée / met à jour la base SQLite
 flask seed               # insère des données de démo (clients, devis)
-python run.py            # http://localhost:5000/api/health
+flask creer-gerant gerant@duval.fr   # crée le compte (mot de passe demandé)
+python run.py            # http://localhost:5000/
 ```
+
+`flask` lit `FLASK_APP=run.py` dans `.env`, pas besoin de l'exporter.
 
 Sous **Windows (PowerShell)**, pas besoin d'activer le venv (`Activate.ps1`
 est souvent bloqué par la politique d'exécution) : on appelle directement
@@ -155,10 +159,10 @@ le Python du venv.
 py -m venv venv
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env   # puis remplir SECRET_KEY
-$env:FLASK_APP = "run.py"
 .\venv\Scripts\flask.exe db upgrade
 .\venv\Scripts\flask.exe seed
-.\venv\Scripts\python.exe run.py   # http://localhost:5000/apidocs/
+.\venv\Scripts\flask.exe creer-gerant gerant@duval.fr
+.\venv\Scripts\python.exe run.py   # http://localhost:5000/
 ```
 
 `ModuleNotFoundError: No module named 'flask'` : le serveur a été lancé avec
@@ -196,9 +200,33 @@ durée de validité et cadre « Bon pour accord ». Un devis en brouillon porte 
 mention BROUILLON. Les coordonnées de l'entreprise et la durée de validité sont
 dans `Config.ENTREPRISE` et `Config.DEVIS_VALIDITE_JOURS` (`app/config.py`).
 
+## Connexion du gérant
+
+Toute l'application est réservée au gérant connecté (Flask-Login) :
+
+- **Pages** : sans session, redirection vers `/connexion`, puis retour à la
+  page demandée après connexion (seules les adresses locales sont acceptées).
+- **API** : sans session, `401 {"erreur": "Authentification requise."}`.
+- **Restent publics** : `/api/health` (supervision, CI), `/connexion`, les
+  fichiers statiques et la doc Swagger.
+
+Le compte se crée en ligne de commande, il n'y a pas de page d'inscription :
+
+```bash
+flask creer-gerant gerant@duval.fr   # crée le compte, ou change son mot de passe
+```
+
+Le mot de passe (10 caractères minimum) est demandé deux fois, sans
+s'afficher, et stocké haché (scrypt, Werkzeug), jamais en clair. Un échec de
+connexion affiche le même message que l'email existe ou non. La déconnexion
+se fait par un `POST` protégé par jeton CSRF. Le cookie de session n'est pas
+lisible en JavaScript (`HttpOnly`), est en `SameSite=Lax`, et en HTTPS
+seulement si `SESSION_COOKIE_SECURE=1`.
+
 ## Documentation de l'API (Swagger)
 
-Une fois le serveur lancé :
+Une fois le serveur lancé, et après s'être connecté sur `/connexion` dans le
+même navigateur (sinon « Try it out » répond 401) :
 
 - **Swagger UI** : http://localhost:5000/apidocs/ (tester les routes depuis le navigateur)
 - **Spec OpenAPI brute** : http://localhost:5000/apispec.json
@@ -238,7 +266,9 @@ Modèle : [.env.example](.env.example).
 | Variable | Rôle |
 |---|---|
 | `SECRET_KEY` | Clé secrète Flask. **Obligatoire hors mode debug** : sans elle, ou avec la clé de dev, l'application refuse de démarrer. |
+| `FLASK_APP` | `run.py`, pour que la commande `flask` trouve l'application. |
 | `FLASK_DEBUG` | `1` en développement (rechargement auto, clé de dev tolérée), `0` en production. |
+| `SESSION_COOKIE_SECURE` | `1` en production (cookie de session en HTTPS seulement). |
 | `DATABASE_URL` | Optionnel, SQLite `instance/devis.db` par défaut. |
 
 Générer une clé : `python -c "import secrets; print(secrets.token_hex(32))"`
@@ -250,6 +280,7 @@ docker compose up --build   # lit SECRET_KEY dans .env
 ```
 
 Le conteneur applique les migrations (`flask db upgrade`) au démarrage.
+Créer ensuite le compte : `docker compose exec web flask creer-gerant gerant@duval.fr`.
 
 ## Intégration continue
 

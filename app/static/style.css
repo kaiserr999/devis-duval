@@ -51,6 +51,15 @@ a { color: var(--primaire); }
 }
 .barre nav a:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 .barre nav a[aria-current="page"] { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.barre nav { align-items: center; }
+.deconnexion { margin: 0 0 0 0.5rem; }
+.deconnexion button {
+  font: inherit; font-size: 0.9rem; color: #d5e2ec; background: none; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; padding: 0.3rem 0.7rem;
+}
+.deconnexion button:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.connexion { max-width: 24rem; width: 100%; margin: 2rem auto 0; display: grid; gap: 1rem; }
 
 /* --- Contenu --- */
 .contenu {
@@ -102,6 +111,7 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 .alerte-succes { background: var(--succes-doux); border-color: var(--succes); color: var(--succes); }
 .alerte-erreur { background: var(--danger-doux); border-color: var(--danger); color: var(--danger); }
+.alerte-info { background: var(--primaire-doux); border-color: var(--primaire); color: var(--primaire); }
 
 /* --- Tableaux --- */
 .tableau-defilant {

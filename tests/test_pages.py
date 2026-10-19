@@ -3,8 +3,6 @@ from decimal import Decimal
 
 import pytest
 
-from app import create_app
-from app.config import TestConfig
 from app.extensions import db
 from app.models import Client, Devis, LigneDevis
 
@@ -229,20 +227,10 @@ def test_supprimer_devis_brouillon(client, brouillon):
 
 # --- Sécurité ---
 
-class ConfigAvecCsrf(TestConfig):
-    WTF_CSRF_ENABLED = True
-
-
-def test_formulaire_sans_jeton_csrf_refuse():
-    app = create_app(ConfigAvecCsrf)
-    with app.app_context():
-        db.create_all()
-        client = app.test_client()
-        reponse = client.post("/clients/nouveau", data={"nom": "Pirate"})
-        assert reponse.status_code == 400
-        assert db.session.scalars(db.select(Client)).first() is None
-        # L'API JSON n'utilise pas de jeton CSRF
-        assert client.post("/api/clients",
-                           json={"nom": "API"}).status_code == 201
-        db.session.remove()
-        db.drop_all()
+def test_formulaire_sans_jeton_csrf_refuse(app, client):
+    app.config["WTF_CSRF_ENABLED"] = True
+    reponse = client.post("/clients/nouveau", data={"nom": "Pirate"})
+    assert reponse.status_code == 400
+    assert db.session.scalars(db.select(Client)).first() is None
+    # L'API JSON n'utilise pas de jeton CSRF
+    assert client.post("/api/clients", json={"nom": "API"}).status_code == 201

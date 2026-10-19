@@ -26,6 +26,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JSON_SORT_KEYS = False
 
+    # Cookie de session : pas lisible en JavaScript, pas envoyé par les
+    # formulaires d'autres sites, HTTPS seulement si SESSION_COOKIE_SECURE=1
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE") == "1"
+
     # En-tête des devis PDF (entreprise fictive du projet Portfolio)
     ENTREPRISE = {
         "nom": "SARL Peinture Duval",

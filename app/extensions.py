@@ -1,4 +1,5 @@
 """Extensions Flask partagées."""
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -9,6 +10,8 @@ db = SQLAlchemy()
 migrate = Migrate()
 # Jeton CSRF exigé sur les formulaires des pages (pas sur l'API JSON)
 csrf = CSRFProtect()
+# Session du gérant connecté (voir app/auth.py)
+login_manager = LoginManager()
 
 
 @event.listens_for(Engine, "connect")
