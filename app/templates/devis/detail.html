@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titre %}Devis {{ devis.numero }}{% endblock %}
+{% block contenu %}
+<p><a href="{{ url_for('pages.liste_devis') }}">← Tous les devis</a></p>
+
+<div class="entete">
+  <div class="entete-titre">
+    <h1>Devis <span class="numero">{{ devis.numero }}</span>
+      <span class="statut statut-{{ devis.statut }}">{{ LIBELLES_STATUT[devis.statut] }}</span></h1>
+    <p class="sous-titre">
+      Pour <a href="{{ url_for('pages.fiche_client', client_id=devis.client_id) }}">{{ devis.client.nom }}</a>
+      · créé le {{ devis.date_creation|date_fr }}
+    </p>
+  </div>
+  <div class="actions">
+    <a class="bouton bouton-secondaire" href="{{ url_for('pages.pdf_devis', devis_id=devis.id, apercu=1) }}"
+       target="_blank" rel="noopener">Aperçu PDF</a>
+    <a class="bouton bouton-secondaire" href="{{ url_for('pages.pdf_devis', devis_id=devis.id) }}">Télécharger le PDF</a>
+    {% for statut, libelle in actions.items() %}
+    <form method="post" action="{{ url_for('pages.changer_statut', devis_id=devis.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="statut" value="{{ statut }}">
+      <button class="bouton{% if statut == 'refuse' %} bouton-danger{% endif %}" type="submit"
+              {% if statut == 'envoye' and not devis.lignes %}disabled title="Ajoutez au moins une ligne"{% endif %}>{{ libelle }}</button>
+    </form>
+    {% endfor %}
+    {% if devis.statut == 'brouillon' %}
+    <a class="bouton bouton-secondaire" href="{{ url_for('pages.modifier_devis', devis_id=devis.id) }}">Modifier</a>
+    <form method="post" action="{{ url_for('pages.supprimer_devis', devis_id=devis.id) }}"
+          onsubmit="return confirm('Supprimer définitivement ce devis ?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="bouton bouton-danger" type="submit">Supprimer</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if devis.statut == 'brouillon' %}
+<p class="aide">Brouillon : modifiable. Une fois envoyé, le devis ne peut plus être modifié ni supprimé.</p>
+{% endif %}
+
+<div class="tableau-defilant">
+  <table>
+    <thead>
+      <tr><th>Description</th><th class="nombre">Quantité</th><th class="nombre">Prix unitaire</th><th class="nombre">Sous-total</th></tr>
+    </thead>
+    <tbody>
+      {% for ligne in devis.lignes %}
+      <tr>
+        <td>{{ ligne.description }}</td>
+        <td class="nombre">{{ ligne.quantite|nombre }}</td>
+        <td class="nombre">{{ ligne.prix_unitaire|euro }}</td>
+        <td class="nombre">{{ ligne.sous_total|euro }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="vide">Aucune ligne. Modifiez le devis pour en ajouter.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">Total</td><td class="nombre">{{ devis.total|euro }}</td></tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

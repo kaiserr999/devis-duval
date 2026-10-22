@@ -29,6 +29,8 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: tests
+    env:
+      SECRET_KEY: cle-ci-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
 

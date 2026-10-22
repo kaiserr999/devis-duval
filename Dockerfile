@@ -11,7 +11,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# L'application ne tourne pas en root : seul instance/ (base SQLite) lui
+# est accessible en écriture
+RUN useradd --create-home --uid 1000 app \
+    && mkdir -p instance \
+    && chown app:app instance \
+    && chmod +x docker-entrypoint.sh
+USER app
+
 EXPOSE 5000
 
-# Applique les migrations puis démarre le serveur
-CMD ["sh", "-c", "flask db upgrade && exec gunicorn --bind 0.0.0.0:5000 run:app"]
+# Migrations, démo et compte du gérant (selon l'environnement), puis
+# gunicorn : voir docker-entrypoint.sh
+CMD ["./docker-entrypoint.sh"]

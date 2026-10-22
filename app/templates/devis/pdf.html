@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Devis {{ devis.numero }}</title>
+<style>
+  /* CSS limité à ce que xhtml2pdf comprend : tableaux, marges, couleurs */
+  @page {
+    size: a4 portrait;
+    margin: 1.6cm 1.6cm 2.2cm 1.6cm;
+    @frame pied {
+      -pdf-frame-content: pied;
+      bottom: 0.8cm; margin-left: 1.6cm; margin-right: 1.6cm; height: 1cm;
+    }
+  }
+  body { font-family: Helvetica; font-size: 9.5pt; color: #1f2328; }
+  .bleu { color: #1d4e6f; }
+  .discret { color: #5f6670; }
+  h1 { font-size: 20pt; margin: 0; color: #1d4e6f; }
+  .entreprise { font-size: 13pt; font-weight: bold; color: #1d4e6f; }
+  table { width: 100%; }
+  .entete td { vertical-align: top; }
+  .bloc { border: 1px solid #dcd9d2; padding: 8pt; }
+  .etiquette { font-size: 7.5pt; color: #5f6670; text-transform: uppercase; }
+  .lignes { margin-top: 14pt; }
+  .lignes th {
+    background-color: #1d4e6f; color: #ffffff; font-size: 8pt;
+    padding: 5pt 6pt 3pt 6pt; text-align: left;
+  }
+  .lignes td { padding: 5pt 6pt 3pt 6pt; border-bottom: 1px solid #dcd9d2; }
+  .droite, .lignes th.droite { text-align: right; }
+  .total td { font-size: 12pt; font-weight: bold; padding: 7pt 6pt 5pt 6pt; }
+  .total .montant { background-color: #e4edf3; color: #1d4e6f; }
+  .brouillon {
+    color: #a3322a; border: 1px solid #a3322a; padding: 5pt;
+    text-align: center; font-weight: bold;
+  }
+  .signature td { vertical-align: top; height: 70pt; }
+  #pied { font-size: 7.5pt; color: #5f6670; text-align: center; }
+</style>
+</head>
+<body>
+
+<table class="entete">
+  <tr>
+    <td width="55%">
+      <div class="entreprise">{{ entreprise.nom }}</div>
+      <div>{{ entreprise.adresse }}</div>
+      <div>Tél. {{ entreprise.telephone }}</div>
+      <div>{{ entreprise.email }}</div>
+    </td>
+    <td width="45%" class="droite">
+      <h1>DEVIS</h1>
+      <div><b>N° {{ devis.numero }}</b></div>
+      <div>Date : {{ devis.date_creation|date_fr }}</div>
+      <div class="discret">Valable jusqu'au {{ valable_jusqu_au|date_fr }}</div>
+    </td>
+  </tr>
+</table>
+
+<br>
+
+<table>
+  <tr>
+    <td width="50%"></td>
+    <td width="50%" class="bloc">
+      <div class="etiquette">Client</div>
+      <b>{{ devis.client.nom }}</b>
+      {% if devis.client.adresse %}<br>{{ devis.client.adresse }}{% endif %}
+      {% if devis.client.telephone %}<br>Tél. {{ devis.client.telephone }}{% endif %}
+      {% if devis.client.email %}<br>{{ devis.client.email }}{% endif %}
+    </td>
+  </tr>
+</table>
+
+{% if devis.statut == 'brouillon' %}
+<br>
+<div class="brouillon">BROUILLON : document provisoire, non envoyé au client</div>
+{% endif %}
+
+<table class="lignes" repeat="1">
+  <thead>
+    <tr>
+      <th width="52%">Description</th>
+      <th width="12%" class="droite">Quantité</th>
+      <th width="18%" class="droite">Prix unitaire</th>
+      <th width="18%" class="droite">Sous-total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ligne in devis.lignes %}
+    <tr>
+      <td>{{ ligne.description }}</td>
+      <td class="droite">{{ ligne.quantite|nombre }}</td>
+      <td class="droite">{{ ligne.prix_unitaire|euro }}</td>
+      <td class="droite">{{ ligne.sous_total|euro }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="discret">Aucune ligne.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<table class="total">
+  <tr>
+    <td width="64%"></td>
+    <td width="18%" class="montant">Total</td>
+    <td width="18%" class="montant droite">{{ devis.total|euro }}</td>
+  </tr>
+</table>
+
+<br><br>
+<p class="discret">
+  Devis valable {{ validite_jours }} jours à compter de sa date d'émission.
+  Pour l'accepter, merci de le retourner daté et signé avec la mention
+  « Bon pour accord ».
+</p>
+
+<br>
+<table class="signature">
+  <tr>
+    <td width="50%" class="bloc">
+      <div class="etiquette">Pour {{ entreprise.nom }}</div>
+    </td>
+    <td width="4%"></td>
+    <td width="46%" class="bloc">
+      <div class="etiquette">Bon pour accord : date et signature du client</div>
+    </td>
+  </tr>
+</table>
+
+<div id="pied">
+  {{ entreprise.nom }} · {{ entreprise.adresse }} · SIRET {{ entreprise.siret }}
+  · Devis {{ devis.numero }} · page <pdf:pagenumber> / <pdf:pagecount>
+</div>
+
+</body>
+</html>

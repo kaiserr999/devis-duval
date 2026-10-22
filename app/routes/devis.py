@@ -103,6 +103,34 @@ def prochain_numero():
     return f"{prefixe}{dernier + 1:04d}"
 
 
+def nouveau_devis(client, donnees):
+    """Crée et enregistre un devis en brouillon pour ce client. Lève 400.
+
+    numero, statut et total envoyés par le client sont ignorés.
+    Le devis n'est rattaché au client qu'une fois les lignes validées.
+    """
+    devis = Devis(numero=prochain_numero(), statut="brouillon")
+    appliquer_lignes(devis, construire_lignes(donnees))
+    devis.client = client
+    db.session.add(devis)
+    db.session.commit()
+    return devis
+
+
+def appliquer_statut(devis, nouveau):
+    """Fait avancer le statut du devis et enregistre. Lève 400 ou 409."""
+    if nouveau not in STATUTS:
+        abort(400, description="Statut inconnu. Valeurs possibles : "
+                               + ", ".join(STATUTS) + ".")
+    if nouveau not in TRANSITIONS[devis.statut]:
+        abort(409, description=f"Passage de '{devis.statut}' à "
+                               f"'{nouveau}' interdit.")
+    if nouveau == "envoye" and not devis.lignes:
+        abort(409, description="Impossible d'envoyer un devis sans ligne.")
+    devis.statut = nouveau
+    db.session.commit()
+
+
 def trouver_devis(devis_id):
     """Renvoie le devis demandé, ou 404."""
     return db.get_or_404(Devis, devis_id, description="Devis introuvable.")
@@ -117,7 +145,29 @@ def exiger_brouillon(devis, action):
 
 @devis_bp.get("")
 def lister_devis():
-    """Liste les devis, filtrables par ?client_id= et ?statut=."""
+    """Liste les devis, filtrables par ?client_id= et ?statut=.
+    ---
+    tags: [Devis]
+    parameters:
+      - name: client_id
+        in: query
+        type: integer
+      - name: statut
+        in: query
+        type: string
+        enum: [brouillon, envoye, accepte, refuse]
+    responses:
+      200:
+        description: Liste des devis
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/Devis'
+      400:
+        description: Filtre invalide
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     requete = db.select(Devis).order_by(Devis.id)
 
     client_id = request.args.get("client_id")
@@ -139,7 +189,37 @@ def lister_devis():
 
 @devis_bp.post("")
 def creer_devis():
-    """Crée un devis en brouillon (numéro et total calculés)."""
+    """Crée un devis en brouillon (numéro et total calculés).
+
+    numero, statut, total et sous_total éventuellement envoyés sont
+    ignorés : le serveur les calcule.
+    ---
+    tags: [Devis]
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required: [client_id]
+          properties:
+            client_id:
+              type: integer
+              example: 1
+            lignes:
+              type: array
+              items:
+                $ref: '#/definitions/LigneEntree'
+    responses:
+      201:
+        description: Devis créé en brouillon
+        schema:
+          $ref: '#/definitions/Devis'
+      400:
+        description: Données invalides ou client inexistant
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     donnees = lire_json()
 
     client_id = donnees.get("client_id")
@@ -150,25 +230,72 @@ def creer_devis():
     if client is None:
         abort(400, description="Le client indiqué n'existe pas.")
 
-    # numero, statut et total envoyés par le client sont ignorés.
-    # Le devis n'est rattaché au client qu'une fois les lignes validées.
-    devis = Devis(numero=prochain_numero(), statut="brouillon")
-    appliquer_lignes(devis, construire_lignes(donnees))
-    devis.client = client
-    db.session.add(devis)
-    db.session.commit()
+    devis = nouveau_devis(client, donnees)
     return jsonify(devis.to_dict()), 201
 
 
 @devis_bp.get("/<int:devis_id>")
 def voir_devis(devis_id):
-    """Renvoie un devis avec ses lignes."""
+    """Renvoie un devis avec ses lignes.
+    ---
+    tags: [Devis]
+    parameters:
+      - name: devis_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Le devis avec ses lignes
+        schema:
+          $ref: '#/definitions/Devis'
+      404:
+        description: Devis introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     return jsonify(trouver_devis(devis_id).to_dict()), 200
 
 
 @devis_bp.put("/<int:devis_id>")
 def modifier_devis(devis_id):
-    """Remplace les lignes d'un devis en brouillon."""
+    """Remplace les lignes d'un devis en brouillon.
+    ---
+    tags: [Devis]
+    parameters:
+      - name: devis_id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required: [lignes]
+          properties:
+            lignes:
+              type: array
+              items:
+                $ref: '#/definitions/LigneEntree'
+    responses:
+      200:
+        description: Le devis avec ses lignes
+        schema:
+          $ref: '#/definitions/Devis'
+      400:
+        description: Lignes invalides
+        schema:
+          $ref: '#/definitions/Erreur'
+      404:
+        description: Devis introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+      409:
+        description: Le devis n'est plus en brouillon
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     devis = trouver_devis(devis_id)
     exiger_brouillon(devis, "modifié")
     donnees = lire_json()
@@ -181,25 +308,70 @@ def modifier_devis(devis_id):
 
 @devis_bp.patch("/<int:devis_id>/statut")
 def changer_statut(devis_id):
-    """Fait avancer le statut : brouillon -> envoye -> accepte/refuse."""
+    """Fait avancer le statut : brouillon -> envoye -> accepte/refuse.
+    ---
+    tags: [Devis]
+    parameters:
+      - name: devis_id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required: [statut]
+          properties:
+            statut:
+              type: string
+              enum: [brouillon, envoye, accepte, refuse]
+              example: envoye
+    responses:
+      200:
+        description: Le devis avec ses lignes
+        schema:
+          $ref: '#/definitions/Devis'
+      400:
+        description: Statut inconnu
+        schema:
+          $ref: '#/definitions/Erreur'
+      404:
+        description: Devis introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+      409:
+        description: Transition interdite ou devis sans ligne
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     devis = trouver_devis(devis_id)
-    nouveau = lire_json().get("statut")
-    if nouveau not in STATUTS:
-        abort(400, description="Statut inconnu. Valeurs possibles : "
-                               + ", ".join(STATUTS) + ".")
-    if nouveau not in TRANSITIONS[devis.statut]:
-        abort(409, description=f"Passage de '{devis.statut}' à "
-                               f"'{nouveau}' interdit.")
-    if nouveau == "envoye" and not devis.lignes:
-        abort(409, description="Impossible d'envoyer un devis sans ligne.")
-    devis.statut = nouveau
-    db.session.commit()
+    appliquer_statut(devis, lire_json().get("statut"))
     return jsonify(devis.to_dict()), 200
 
 
 @devis_bp.delete("/<int:devis_id>")
 def supprimer_devis(devis_id):
-    """Supprime un devis en brouillon (ses lignes partent avec lui)."""
+    """Supprime un devis en brouillon (ses lignes partent avec lui).
+    ---
+    tags: [Devis]
+    parameters:
+      - name: devis_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      204:
+        description: Devis supprimé
+      404:
+        description: Devis introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+      409:
+        description: Le devis n'est plus en brouillon
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
     devis = trouver_devis(devis_id)
     exiger_brouillon(devis, "supprimé")
     db.session.delete(devis)

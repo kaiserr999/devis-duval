@@ -1,0 +1,29 @@
+# Déploiement sur Render (https://render.com) : New > Blueprint, puis
+# choisir ce dépôt. Render construit le Dockerfile et lance
+# docker-entrypoint.sh.
+services:
+  - type: web
+    name: devis-duval
+    runtime: docker
+    plan: free
+    branch: main
+    healthCheckPath: /api/health
+    envVars:
+      # Clé secrète générée par Render, jamais écrite dans le dépôt
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "0"
+      # Render sert le site en HTTPS, via son proxy
+      - key: SESSION_COOKIE_SECURE
+        value: "1"
+      - key: DERRIERE_PROXY
+        value: "1"
+      # Démo : clients et devis d'exemple si la base est vide
+      - key: SEED_DEMO
+        value: "1"
+      # Compte du gérant : valeurs demandées à la création du Blueprint
+      - key: GERANT_EMAIL
+        sync: false
+      - key: GERANT_MOT_DE_PASSE
+        sync: false
