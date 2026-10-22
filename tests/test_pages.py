@@ -172,6 +172,13 @@ def test_creer_devis_ligne_invalide_garde_la_saisie(client, mme_martin):
     assert db.session.scalars(db.select(Devis)).first() is None
 
 
+def test_formulaire_modification_montants_a_la_francaise(client, brouillon):
+    page = client.get(f"/devis/{brouillon.id}/modifier").get_data(
+        as_text=True)
+    assert 'value="10"' in page
+    assert 'value="25,50"' in page
+
+
 def test_modifier_devis(client, brouillon):
     reponse = client.post(f"/devis/{brouillon.id}/modifier",
                           data=lignes_formulaire(("Plafond", "4", "30")))

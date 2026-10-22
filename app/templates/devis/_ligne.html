@@ -4,11 +4,11 @@
            aria-label="Description" placeholder="Ex. Peinture salon (m²)">
   </td>
   <td class="col-montant">
-    <input name="quantite" inputmode="decimal" value="{{ quantite }}"
+    <input name="quantite" inputmode="decimal" value="{{ quantite|replace('.', ',') }}"
            aria-label="Quantité" placeholder="1" class="nombre">
   </td>
   <td class="col-montant">
-    <input name="prix_unitaire" inputmode="decimal" value="{{ prix }}"
+    <input name="prix_unitaire" inputmode="decimal" value="{{ prix|replace('.', ',') }}"
            aria-label="Prix unitaire en euros" placeholder="0,00" class="nombre">
   </td>
   <td class="col-action">

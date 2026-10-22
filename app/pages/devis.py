@@ -5,7 +5,7 @@ from flask import Response, flash, redirect, render_template, request, \
 from app.extensions import db
 from app.models import Client, Devis
 from app.models.devis import STATUTS
-from app.pages import LIBELLES_STATUT, essayer, pages_bp
+from app.pages import LIBELLES_STATUT, essayer, nombre, pages_bp
 from app.pdf import generer_pdf, nom_fichier
 from app.routes.devis import TRANSITIONS, appliquer_lignes, \
     appliquer_statut, construire_lignes, nouveau_devis, trouver_devis
@@ -46,7 +46,12 @@ def lignes_du_formulaire():
 def formulaire(devis=None, client_id=None, lignes=None, erreur=None):
     """Affiche le formulaire devis (création si devis est None)."""
     if lignes is None:
-        lignes = [ligne.to_dict() for ligne in devis.lignes] if devis else []
+        # Quantité sans zéros inutiles (30.00 -> 30) ; le template affiche
+        # ensuite les montants avec une virgule
+        lignes = [{"description": ligne.description,
+                   "quantite": nombre(ligne.quantite),
+                   "prix_unitaire": f"{ligne.prix_unitaire:.2f}"}
+                  for ligne in devis.lignes] if devis else []
     clients = db.session.scalars(
         db.select(Client).order_by(Client.nom, Client.id)).all()
     statut_http = 400 if erreur else 200
