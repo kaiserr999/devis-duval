@@ -1,0 +1,192 @@
+/* Interface Devis Duval : sobre, lisible, utilisable sur téléphone. */
+:root {
+  --fond: #f6f5f2;
+  --surface: #ffffff;
+  --texte: #1f2328;
+  --discret: #5f6670;
+  --bordure: #dcd9d2;
+  --primaire: #1d4e6f;
+  --primaire-fonce: #153a53;
+  --primaire-doux: #e4edf3;
+  --danger: #a3322a;
+  --danger-doux: #f8e4e2;
+  --succes: #2f6d3f;
+  --succes-doux: #e3f1e6;
+  --rayon: 8px;
+  --police: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font: 16px/1.5 var(--police);
+}
+
+a { color: var(--primaire); }
+
+/* --- Barre du haut --- */
+.barre { background: var(--primaire-fonce); color: #fff; }
+.barre-contenu {
+  max-width: 64rem; margin: 0 auto; padding: 0.75rem 16px;
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 0.5rem 1.5rem;
+}
+.marque {
+  color: #fff; text-decoration: none; font-weight: 700; font-size: 1.1rem;
+  display: flex; align-items: center; gap: 0.55rem;
+}
+.marque-pastille {
+  width: 0.9rem; height: 0.9rem; border-radius: 50%;
+  background: #e0a458; box-shadow: 0.35rem 0 0 #c8553d;
+  margin-right: 0.35rem;
+}
+.barre nav { display: flex; gap: 0.25rem; }
+.barre nav a {
+  color: #d5e2ec; text-decoration: none; padding: 0.35rem 0.8rem;
+  border-radius: 6px; font-weight: 500;
+}
+.barre nav a:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.barre nav a[aria-current="page"] { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.barre nav { align-items: center; }
+.deconnexion { margin: 0 0 0 0.5rem; }
+.deconnexion button {
+  font: inherit; font-size: 0.9rem; color: #d5e2ec; background: none; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; padding: 0.3rem 0.7rem;
+}
+.deconnexion button:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.connexion { max-width: 24rem; width: 100%; margin: 2rem auto 0; display: grid; gap: 1rem; }
+
+/* --- Contenu --- */
+.contenu {
+  max-width: 64rem; margin: 0 auto; padding: 1.75rem 16px 4rem;
+  display: grid; gap: 1.25rem;
+}
+h1 { font-size: 1.6rem; margin: 0; line-height: 1.25; }
+h2 { font-size: 1.15rem; margin: 0; }
+
+.entete {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 0.75rem 1rem;
+}
+.entete-titre { display: grid; gap: 0.2rem; }
+.sous-titre { color: var(--discret); margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.actions form { margin: 0; }
+
+.carte {
+  background: var(--surface); border: 1px solid var(--bordure);
+  border-radius: var(--rayon); padding: 1.25rem;
+  display: grid; gap: 1rem;
+}
+
+.vide { color: var(--discret); text-align: center; padding: 2rem 1rem; margin: 0; }
+
+/* --- Boutons --- */
+.bouton {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 6px;
+  border: 1px solid var(--primaire); background: var(--primaire); color: #fff;
+  font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
+  min-height: 2.5rem;
+}
+.bouton:hover { background: var(--primaire-fonce); border-color: var(--primaire-fonce); }
+.bouton-secondaire { background: var(--surface); color: var(--primaire); border-color: var(--bordure); }
+.bouton-secondaire:hover { background: var(--primaire-doux); border-color: var(--primaire); }
+.bouton-danger { background: var(--surface); color: var(--danger); border-color: var(--bordure); }
+.bouton-danger:hover { background: var(--danger-doux); border-color: var(--danger); }
+.bouton-lien {
+  background: none; border: 0; color: var(--danger); padding: 0.25rem;
+  min-height: 0; font-weight: 500; cursor: pointer; font: inherit;
+}
+
+/* --- Alertes --- */
+.alerte {
+  margin: 0; padding: 0.75rem 1rem; border-radius: var(--rayon);
+  border-left: 4px solid;
+}
+.alerte-succes { background: var(--succes-doux); border-color: var(--succes); color: var(--succes); }
+.alerte-erreur { background: var(--danger-doux); border-color: var(--danger); color: var(--danger); }
+.alerte-info { background: var(--primaire-doux); border-color: var(--primaire); color: var(--primaire); }
+
+/* --- Tableaux --- */
+.tableau-defilant {
+  overflow-x: auto; background: var(--surface);
+  border: 1px solid var(--bordure); border-radius: var(--rayon);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th {
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--discret); font-weight: 600; background: #faf9f7;
+}
+tbody tr:hover { background: #faf9f7; }
+.nombre { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.numero { font-family: var(--mono); font-size: 0.92rem; white-space: nowrap; }
+tfoot td { font-weight: 700; font-size: 1.05rem; border-top: 2px solid var(--bordure); border-bottom: 0; }
+
+/* --- Statuts --- */
+.statut {
+  display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+}
+.statut-brouillon { background: #eceae5; color: #4b5058; }
+.statut-envoye { background: var(--primaire-doux); color: var(--primaire); }
+.statut-accepte { background: var(--succes-doux); color: var(--succes); }
+.statut-refuse { background: var(--danger-doux); color: var(--danger); }
+
+.filtres { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.filtres a {
+  padding: 0.3rem 0.8rem; border-radius: 999px; text-decoration: none;
+  border: 1px solid var(--bordure); background: var(--surface); color: var(--texte);
+  font-size: 0.9rem;
+}
+.filtres a[aria-current="true"] { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+
+/* --- Fiche (liste de définitions) --- */
+.infos { display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1.25rem; margin: 0; }
+.infos dt { color: var(--discret); }
+.infos dd { margin: 0; overflow-wrap: anywhere; }
+
+/* --- Formulaires --- */
+.champs { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.champ { display: grid; gap: 0.3rem; }
+.champ-large { grid-column: 1 / -1; }
+label { font-weight: 600; font-size: 0.92rem; }
+.obligatoire { color: var(--danger); }
+input, select {
+  font: inherit; padding: 0.5rem 0.65rem; border: 1px solid var(--bordure);
+  border-radius: 6px; background: #fff; color: var(--texte); width: 100%;
+  min-height: 2.5rem;
+}
+input:focus, select:focus { outline: 2px solid var(--primaire); outline-offset: 1px; border-color: var(--primaire); }
+.aide { color: var(--discret); font-size: 0.85rem; margin: 0; }
+
+/* Tableau des lignes du devis */
+.lignes td { padding: 0.5rem; }
+.lignes input { min-width: 5rem; }
+.lignes .col-description input { min-width: 14rem; }
+.lignes .col-montant { width: 9rem; }
+.lignes .col-action { width: 3rem; text-align: center; }
+.estimation { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.estimation strong { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+
+.erreur-page { text-align: center; padding: 3rem 1rem; display: grid; gap: 1rem; justify-items: center; }
+.erreur-code { font-size: 3rem; font-weight: 800; color: var(--primaire); margin: 0; }
+
+.visuellement-cache {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .champs { grid-template-columns: 1fr; }
+  .infos { grid-template-columns: 1fr; gap: 0.1rem; }
+  .infos dd { margin-bottom: 0.6rem; }
+  h1 { font-size: 1.35rem; }
+}

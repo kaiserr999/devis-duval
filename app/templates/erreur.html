@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titre %}Erreur {{ erreur.code }}{% endblock %}
+{% block contenu %}
+<div class="carte erreur-page">
+  <p class="erreur-code">{{ erreur.code }}</p>
+  <h1>{{ 'Page introuvable' if erreur.code == 404 else erreur.name }}</h1>
+  <p class="sous-titre">{{ erreur.description }}</p>
+  <a class="bouton" href="{{ url_for('pages.liste_devis') }}">Retour aux devis</a>
+</div>
+{% endblock %}

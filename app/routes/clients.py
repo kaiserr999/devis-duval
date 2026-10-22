@@ -1,0 +1,178 @@
+"""Routes CRUD des clients."""
+from flask import Blueprint, abort, jsonify
+
+from app.extensions import db
+from app.models import Client
+from app.validation import lire_json
+
+clients_bp = Blueprint("clients", __name__, url_prefix="/api/clients")
+
+# Champs modifiables et longueur maximale (identique aux colonnes)
+CHAMPS = {"nom": 120, "email": 120, "telephone": 30, "adresse": 255}
+
+
+def valider_client(donnees):
+    """Vérifie et nettoie les champs d'un client. Lève 400 si invalide."""
+    propres = {}
+    for champ, longueur_max in CHAMPS.items():
+        valeur = donnees.get(champ)
+        if valeur is not None:
+            if not isinstance(valeur, str):
+                abort(400, description=f"Le champ '{champ}' doit être "
+                                       "une chaîne de caractères.")
+            valeur = valeur.strip() or None
+        if valeur is not None and len(valeur) > longueur_max:
+            abort(400, description=f"Le champ '{champ}' dépasse "
+                                   f"{longueur_max} caractères.")
+        propres[champ] = valeur
+
+    if propres["nom"] is None:
+        abort(400, description="Le champ 'nom' est obligatoire.")
+    if propres["email"] is not None and "@" not in propres["email"]:
+        abort(400, description="Le champ 'email' est invalide.")
+    return propres
+
+
+def supprimer(client):
+    """Supprime un client, ou lève 409 s'il a des devis."""
+    if client.devis:
+        abort(409, description="Ce client a des devis : il ne peut pas "
+                               "être supprimé.")
+    db.session.delete(client)
+    db.session.commit()
+
+
+def trouver_client(client_id):
+    """Renvoie le client demandé, ou 404."""
+    return db.get_or_404(Client, client_id,
+                         description="Client introuvable.")
+
+
+@clients_bp.get("")
+def lister_clients():
+    """Liste tous les clients, par ordre alphabétique.
+    ---
+    tags: [Clients]
+    responses:
+      200:
+        description: Liste des clients
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/Client'
+    """
+    clients = db.session.scalars(
+        db.select(Client).order_by(Client.nom, Client.id)).all()
+    return jsonify([client.to_dict() for client in clients]), 200
+
+
+@clients_bp.post("")
+def creer_client():
+    """Crée un client.
+    ---
+    tags: [Clients]
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ClientEntree'
+    responses:
+      201:
+        description: Client créé
+        schema:
+          $ref: '#/definitions/Client'
+      400:
+        description: Données invalides (nom manquant, email invalide...)
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
+    client = Client(**valider_client(lire_json()))
+    db.session.add(client)
+    db.session.commit()
+    return jsonify(client.to_dict()), 201
+
+
+@clients_bp.get("/<int:client_id>")
+def voir_client(client_id):
+    """Renvoie un client.
+    ---
+    tags: [Clients]
+    parameters:
+      - name: client_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Le client
+        schema:
+          $ref: '#/definitions/Client'
+      404:
+        description: Client introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
+    return jsonify(trouver_client(client_id).to_dict()), 200
+
+
+@clients_bp.put("/<int:client_id>")
+def modifier_client(client_id):
+    """Remplace les informations d'un client (champ absent = vidé).
+    ---
+    tags: [Clients]
+    parameters:
+      - name: client_id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ClientEntree'
+    responses:
+      200:
+        description: Le client
+        schema:
+          $ref: '#/definitions/Client'
+      400:
+        description: Données invalides
+        schema:
+          $ref: '#/definitions/Erreur'
+      404:
+        description: Client introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
+    client = trouver_client(client_id)
+    for champ, valeur in valider_client(lire_json()).items():
+        setattr(client, champ, valeur)
+    db.session.commit()
+    return jsonify(client.to_dict()), 200
+
+
+@clients_bp.delete("/<int:client_id>")
+def supprimer_client(client_id):
+    """Supprime un client, sauf s'il a des devis (409).
+    ---
+    tags: [Clients]
+    parameters:
+      - name: client_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      204:
+        description: Client supprimé
+      404:
+        description: Client introuvable
+        schema:
+          $ref: '#/definitions/Erreur'
+      409:
+        description: Le client a des devis
+        schema:
+          $ref: '#/definitions/Erreur'
+    """
+    supprimer(trouver_client(client_id))
+    return "", 204
