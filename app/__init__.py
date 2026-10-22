@@ -3,6 +3,7 @@ import os
 
 from flasgger import Swagger
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.config import CLE_DEV, Config
 from app.extensions import csrf, db, login_manager, migrate
@@ -29,6 +30,12 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     verifier_secret_key(app)
+
+    # Derrière le proxy HTTPS de l'hébergeur : lire le schéma (https) et
+    # l'hôte d'origine dans les en-têtes X-Forwarded-*
+    if app.config.get("DERRIERE_PROXY"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1,
+                                x_host=1)
 
     os.makedirs(os.path.join(os.path.dirname(app.root_path), "instance"),
                 exist_ok=True)

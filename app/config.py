@@ -31,6 +31,8 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE") == "1"
+    # 1 quand un proxy HTTPS (Render...) est devant l'application
+    DERRIERE_PROXY = os.environ.get("DERRIERE_PROXY") == "1"
 
     # En-tête des devis PDF (entreprise fictive du projet Portfolio)
     ENTREPRISE = {
