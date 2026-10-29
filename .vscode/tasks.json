@@ -1,0 +1,110 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Installer le projet (première fois)",
+      "detail": "Crée le venv, installe les dépendances, crée .env et la base",
+      "type": "shell",
+      "command": "python3 -m venv venv && ./venv/bin/python -m pip install -r requirements.txt && { [ -f .env ] || cp .env.example .env; } && ./venv/bin/flask db upgrade && ./venv/bin/flask seed && echo && echo 'Installation terminée. Créez le compte avec la tâche « Créer ou changer le compte gérant ».'",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mettre à jour (GitHub + base)",
+      "detail": "git pull de main, nouvelles dépendances et migrations",
+      "type": "shell",
+      "command": "git checkout main && git pull && ./venv/bin/python -m pip install -q -r requirements.txt && ./venv/bin/flask db upgrade && echo && echo 'Projet à jour.'",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lancer le site",
+      "detail": "http://localhost:5000 (arrêter : Ctrl+C dans le terminal)",
+      "type": "shell",
+      "command": "./venv/bin/flask db upgrade && ./venv/bin/python run.py",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Tests",
+      "detail": "pytest sur tout le projet",
+      "type": "shell",
+      "command": "./venv/bin/pytest -q",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Style (pycodestyle)",
+      "detail": "Vérifie le style PEP 8, comme la CI",
+      "type": "shell",
+      "command": "./venv/bin/pycodestyle . && echo 'Style OK.'",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tout vérifier (style + tests)",
+      "detail": "Les mêmes vérifications que GitHub Actions",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Style (pycodestyle)",
+        "Tests"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Mettre la base à jour",
+      "detail": "flask db upgrade (après un git pull)",
+      "type": "shell",
+      "command": "./venv/bin/flask db upgrade",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Remettre les données de démo",
+      "detail": "Vide la base (sauf le gérant) puis réinsère clients et devis",
+      "type": "shell",
+      "command": "./venv/bin/flask seed --reset",
+      "problemMatcher": []
+    },
+    {
+      "label": "Créer ou changer le compte gérant",
+      "detail": "Demande l'email, puis le mot de passe dans le terminal",
+      "type": "shell",
+      "command": "./venv/bin/flask creer-gerant ${input:emailGerant}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true
+      }
+    },
+    {
+      "label": "Nouvelle migration",
+      "detail": "Après une modification d'un modèle : flask db migrate puis upgrade",
+      "type": "shell",
+      "command": "./venv/bin/flask db migrate -m \"${input:messageMigration}\" && ./venv/bin/flask db upgrade",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "emailGerant",
+      "type": "promptString",
+      "description": "Email du gérant",
+      "default": "gerant@duval.fr"
+    },
+    {
+      "id": "messageMigration",
+      "type": "promptString",
+      "description": "Description du changement (ex. ajout colonne tva)"
+    }
+  ]
+}
