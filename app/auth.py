@@ -3,8 +3,8 @@ des routes, commande CLI."""
 from urllib.parse import urlsplit
 
 import click
-from flask import Blueprint, flash, jsonify, redirect, render_template, \
-    request, url_for
+from flask import Blueprint, flash, has_request_context, jsonify, \
+    redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -74,6 +74,9 @@ def page_accueil(utilisateur):
 @auth_bp.app_context_processor
 def url_accueil():
     """Lien du logo et des pages d'erreur, selon la personne connectée."""
+    if not has_request_context():
+        # Template rendu hors requête (PDF depuis une commande, tests)
+        return {}
     if current_user.is_authenticated:
         return {"url_accueil": page_accueil(current_user)}
     return {"url_accueil": url_for("auth.connexion")}

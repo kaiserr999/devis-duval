@@ -10,6 +10,10 @@
     <p class="sous-titre">
       Pour <a href="{{ url_for('pages.fiche_client', client_id=devis.client_id) }}">{{ devis.client.nom }}</a>
       · créé le {{ devis.date_creation|date_fr }}
+      {% if devis.reponse_en_ligne_le %}
+      · <strong>{{ 'accepté' if devis.statut == 'accepte' else 'refusé' }} en ligne
+      par le client le {{ devis.reponse_en_ligne_le|date_fr }}</strong>
+      {% endif %}
     </p>
   </div>
   <div class="actions">

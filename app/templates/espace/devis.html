@@ -19,10 +19,37 @@
   </div>
 </div>
 
-{% if devis.statut == 'envoye' %}
-<p class="alerte alerte-info">
-  Pour accepter ce devis, renvoyez le PDF signé avec la mention «&nbsp;Bon pour accord&nbsp;»,
-  ou contactez {{ entreprise.nom }} au {{ entreprise.telephone }}.
+{% if devis.statut == 'envoye' and expire %}
+<p class="alerte alerte-erreur">
+  Ce devis a expiré le {{ valable_jusqu_au|date_fr }}. Contactez {{ entreprise.nom }}
+  au {{ entreprise.telephone }} pour en obtenir un nouveau.
+</p>
+{% elif devis.statut == 'envoye' %}
+<section class="carte" aria-labelledby="titre-reponse">
+  <h2 id="titre-reponse">Votre réponse</h2>
+  <p class="sous-titre">Ce devis attend votre réponse jusqu'au {{ valable_jusqu_au|date_fr }}.</p>
+  <form method="post" action="{{ url_for('espace.repondre', devis_id=devis.id) }}" class="reponse">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="decision" value="accepte">
+    <label class="case">
+      <input type="checkbox" name="accord" value="1" required>
+      <span>Bon pour accord : j'accepte ce devis d'un montant de {{ devis.total|euro }}.</span>
+    </label>
+    <div class="actions">
+      <button class="bouton" type="submit">Accepter le devis</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('espace.repondre', devis_id=devis.id) }}"
+        onsubmit="return confirm('Refuser définitivement ce devis ?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="decision" value="refuse">
+    <button class="bouton bouton-danger" type="submit">Refuser le devis</button>
+  </form>
+</section>
+{% elif devis.reponse_en_ligne_le %}
+<p class="alerte {{ 'alerte-succes' if devis.statut == 'accepte' else 'alerte-info' }}">
+  Vous avez {{ 'accepté' if devis.statut == 'accepte' else 'refusé' }} ce devis en ligne
+  le {{ devis.reponse_en_ligne_le|date_fr }}.
 </p>
 {% endif %}
 

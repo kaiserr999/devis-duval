@@ -4,9 +4,16 @@
 <div class="entete">
   <div class="entete-titre">
     <h1>Mes devis</h1>
-    <p class="sous-titre">Bonjour {{ client.nom }} · {{ devis|length }} devis. Cliquez sur un numéro pour voir le détail et le PDF.</p>
+    <p class="sous-titre">Bonjour {{ client.nom }} · {{ devis|length }} devis. Cliquez sur un numéro pour voir le détail, le PDF et répondre.</p>
   </div>
 </div>
+
+{% if en_attente %}
+<p class="alerte alerte-info">
+  {{ en_attente }} devis {{ 'attend' if en_attente == 1 else 'attendent' }} votre réponse :
+  ouvrez-le pour l'accepter ou le refuser en ligne.
+</p>
+{% endif %}
 
 {% if devis %}
 <div class="tableau-defilant">
