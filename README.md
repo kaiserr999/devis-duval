@@ -8,8 +8,11 @@ Le gérant crée des clients, puis des devis composés de lignes
 calculé côté serveur**, jamais saisi à la main. Chaque devis se télécharge
 en PDF, prêt à être envoyé au client.
 
-**Démo en ligne** : _lien à ajouter après le déploiement sur Render (voir
-[Mise en ligne](#mise-en-ligne-render))._
+**Démo en ligne** : https://devis-duval.onrender.com (identifiants du gérant
+de démo sur demande). Offre gratuite de Render : le premier chargement après
+une période d'inactivité peut prendre une minute, et les données de démo
+sont remises à zéro à chaque redémarrage (voir
+[Mise en ligne](#mise-en-ligne-render)).
 
 ![Liste des devis](docs/captures/devis-liste.png)
 
@@ -411,7 +414,7 @@ Le fichier [render.yaml](render.yaml) décrit le service. Pour déployer :
    minimum) : ce sont les identifiants de connexion à la démo. Il génère
    lui-même `SECRET_KEY`.
 4. Render construit le `Dockerfile`, vérifie `/api/health`, puis donne
-   l'adresse publique (`https://devis-duval-xxxx.onrender.com`).
+   l'adresse publique : https://devis-duval.onrender.com
 
 Chaque `git push` sur `main` redéploie l'application.
 
