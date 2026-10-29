@@ -267,6 +267,7 @@ Une fois le serveur lancé, ouvrir http://localhost:5000/ :
 | Liste des clients | `/clients` |
 | Fiche client (coordonnées + ses devis) | `/clients/<id>` |
 | Nouveau / modifier un client | `/clients/nouveau`, `/clients/<id>/modifier` |
+| **Client** : créer son compte lui-même | `/inscription` |
 | **Client** : création du compte (lien reçu par email) | `/activation/<jeton>` |
 | **Client** : mes devis | `/espace/` |
 | **Client** : détail et PDF d'un devis | `/espace/devis/<id>`, `/espace/devis/<id>/pdf` |
@@ -299,7 +300,7 @@ Toute l'application est réservée aux personnes connectées (Flask-Login) :
   gérant le renvoient vers son espace, l'API répond `403`). Le gérant, lui,
   n'a pas accès à `/espace/`.
 - **Restent publics** : `/api/health` (supervision, CI), `/connexion`, la
-  création du compte client (`/activation/<jeton>`), les fichiers
+  création du compte client (`/inscription`, `/activation/<jeton>`), les fichiers
   statiques et la doc Swagger.
 
 Le compte du gérant se crée en ligne de commande, il n'y a pas de page
@@ -320,6 +321,16 @@ seulement si `SESSION_COOKIE_SECURE=1`.
 
 Dans le menu, **Espace client** mène à la connexion des clients (et
 **Espace gérant** à celle du gérant).
+
+**Le client crée lui-même son compte** (`/inscription`, bouton « Créer mon
+compte » de l'Espace client) : email, mot de passe (10 caractères minimum),
+téléphone et nom facultatifs. Sa fiche client est créée en même temps, il
+arrive directement sur **Mes devis** et apparaît dans la liste des clients du
+gérant, qui peut lui faire des devis. Si le gérant avait déjà créé une fiche
+avec cet email, aucun compte n'est créé sans preuve que l'email est le sien :
+le lien d'invitation est envoyé à cette adresse.
+
+Le client peut aussi être invité par le gérant :
 
 1. Le gérant crée le client avec son email, puis un devis.
 2. Il clique sur **Marquer comme envoyé** : le client reçoit un email avec
@@ -492,6 +503,9 @@ pycodestyle .
 - **Deux rôles seulement** : gérant (tout) et client (ses devis). Pas de
   « mot de passe oublié » pour les clients : le gérant ne peut que renvoyer
   le lien tant que le compte n'existe pas.
+- **Inscription sans vérification de l'email** : un client qui s'inscrit
+  seul n'a pas à confirmer son adresse (il ne voit que sa propre fiche,
+  vide au départ). Amélioration : email de confirmation avant activation.
 - **Acceptation en ligne simple** : la case « Bon pour accord » et la date
   sont enregistrées, mais ce n'est pas une signature électronique certifiée.
 - **SQLite** : suffisant pour un gérant seul ; plusieurs utilisateurs

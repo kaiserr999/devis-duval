@@ -20,7 +20,7 @@ def test_menu_visiteur_montre_l_espace_client(anonyme):
 def test_page_connexion_client(anonyme):
     page = texte(anonyme.get("/connexion?suivant=/espace/"))
     assert "<h1>Espace client</h1>" in page
-    assert "Créer mon espace client" in page
+    assert "/inscription" in page
     # Pas de compte de démo tant que flask seed n'a pas tourné
     assert "Compte client de démonstration" not in page
 

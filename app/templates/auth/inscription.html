@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titre %}Créer mon compte client{% endblock %}
+{% block contenu %}
+<div class="connexion">
+  <h1>Créer mon compte client</h1>
+
+  {% if envoye_a %}
+  <p class="alerte alerte-info" role="status">
+    {{ entreprise.nom }} a déjà un dossier à l'adresse {{ envoye_a }}. Pour
+    protéger vos devis, nous venons de vous envoyer un email avec un lien
+    « Créer mon espace client » : ouvrez-le pour choisir votre mot de passe.
+  </p>
+  <p><a href="{{ url_for('auth.connexion', suivant='/espace/') }}">Retour à l'espace client</a></p>
+  {% else %}
+  <p class="sous-titre">
+    Retrouvez vos devis {{ entreprise.nom }} en ligne, et acceptez-les ou
+    refusez-les sans papier.
+  </p>
+
+  {% if erreur %}<p class="alerte alerte-erreur" role="alert">{{ erreur }}</p>{% endif %}
+
+  <form class="carte" method="post" action="{{ url_for('auth.inscription') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="champ">
+      <label for="email">Email <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="email" name="email" type="email" required maxlength="120"
+             autocomplete="email" value="{{ valeurs.email or '' }}"
+             {% if not valeurs.email %}autofocus{% endif %}>
+    </div>
+    <div class="champ">
+      <label for="mot_de_passe">Mot de passe <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="mot_de_passe" name="mot_de_passe" type="password" required minlength="10"
+             autocomplete="new-password" aria-describedby="aide-mdp"
+             {% if valeurs.email %}autofocus{% endif %}>
+      <p class="aide" id="aide-mdp">10 caractères minimum.</p>
+    </div>
+    <div class="champ">
+      <label for="confirmation">Confirmer le mot de passe <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="confirmation" name="confirmation" type="password" required minlength="10"
+             autocomplete="new-password">
+    </div>
+    <div class="champ">
+      <label for="telephone">Téléphone <span class="aide">(facultatif)</span></label>
+      <input id="telephone" name="telephone" type="tel" maxlength="30"
+             autocomplete="tel" value="{{ valeurs.telephone or '' }}">
+    </div>
+    <div class="champ">
+      <label for="nom">Nom ou société <span class="aide">(facultatif)</span></label>
+      <input id="nom" name="nom" maxlength="120" autocomplete="name"
+             value="{{ valeurs.nom or '' }}">
+    </div>
+    <button class="bouton" type="submit">Créer mon compte</button>
+  </form>
+  <p class="aide">
+    Déjà un compte ?
+    <a href="{{ url_for('auth.connexion', suivant='/espace/') }}">Se connecter</a>
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
