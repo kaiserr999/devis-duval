@@ -32,10 +32,11 @@
   </form>
 
   {% if espace_client %}
-  <p class="aide">
-    Première visite ? Ouvrez le lien « Créer mon espace client » reçu par email
-    avec votre devis.
-  </p>
+  <div class="carte">
+    <h2>Pas encore de compte ?</h2>
+    <p class="aide">Créez-le vous-même en une minute, avec votre email et un mot de passe.</p>
+    <a class="bouton bouton-secondaire" href="{{ url_for('auth.inscription') }}">Créer mon compte</a>
+  </div>
   {% if demo %}
   <div class="carte demo">
     <h2>Compte client de démonstration</h2>

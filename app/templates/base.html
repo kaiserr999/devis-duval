@@ -34,7 +34,7 @@
       <nav aria-label="Navigation principale">
         {% set espace_demande = (suivant or request.args.get('suivant') or '').startswith('/espace') %}
         <a href="{{ url_for('auth.connexion', suivant='/espace/') }}"
-           {% if espace_demande or request.endpoint == 'auth.activation' %}aria-current="page"{% endif %}>Espace client</a>
+           {% if espace_demande or request.endpoint in ('auth.activation', 'auth.inscription') %}aria-current="page"{% endif %}>Espace client</a>
         <a href="{{ url_for('auth.connexion') }}"
            {% if request.endpoint == 'auth.connexion' and not espace_demande %}aria-current="page"{% endif %}>Espace gérant</a>
       </nav>

@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db, login_manager
 from app.invitations import LienInvalide, lire_jeton
-from app.models import Utilisateur
+from app.models import Client, Utilisateur
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -174,6 +174,76 @@ def activation(jeton):
                                email=email, erreur=erreur), 400
 
     compte.client = client
+    db.session.add(compte)
+    db.session.commit()
+    login_user(compte)
+    flash("Votre compte est créé. Bienvenue dans votre espace client !",
+          "succes")
+    return redirect(url_for("espace.accueil"))
+
+
+def erreur_inscription(email, mot_de_passe, confirmation):
+    """Message d'erreur du formulaire d'inscription, ou None."""
+    if "@" not in email or len(email) > 120:
+        return "Adresse email invalide."
+    if mot_de_passe != confirmation:
+        return "Les deux mots de passe ne sont pas identiques."
+    if db.session.scalars(db.select(Utilisateur.id)
+                          .where(Utilisateur.email == email)).first():
+        return "Un compte existe déjà avec cet email : connectez-vous."
+    return None
+
+
+@auth_bp.route("/inscription", methods=["GET", "POST"])
+def inscription():
+    """Le client crée lui-même son compte (email, mot de passe, téléphone
+    et nom facultatifs), sans passer par le gérant."""
+    if current_user.is_authenticated:
+        return redirect(page_accueil(current_user))
+    if request.method == "GET":
+        return render_template("auth/inscription.html", valeurs={})
+
+    from app.notifications import inviter_client
+    from app.pages import essayer
+    from app.routes.clients import valider_client
+
+    valeurs = request.form
+    email = normaliser_email(valeurs.get("email"))
+    mot_de_passe = valeurs.get("mot_de_passe", "")
+
+    def refuser(message):
+        return render_template("auth/inscription.html", valeurs=valeurs,
+                               erreur=message), 400
+
+    erreur = erreur_inscription(email, mot_de_passe,
+                                valeurs.get("confirmation", ""))
+    if erreur:
+        return refuser(erreur)
+
+    # Fiche déjà créée par le gérant pour cet email : on ne la rattache pas
+    # sans preuve que l'email est bien le sien. Le lien d'invitation part
+    # à cette adresse (il ne s'affiche pas ici).
+    existant = db.session.scalars(db.select(Client).where(
+        db.func.lower(Client.email) == email)).first()
+    if existant is not None:
+        inviter_client(existant)
+        return render_template("auth/inscription.html", valeurs={},
+                               envoye_a=email)
+
+    nom = (valeurs.get("nom") or "").strip() or email.split("@")[0]
+    champs, erreur = essayer(valider_client, {
+        "nom": nom, "email": email,
+        "telephone": valeurs.get("telephone")})
+    if erreur:
+        return refuser(erreur.replace("'telephone'", "téléphone")
+                       .replace("'nom'", "nom"))
+    compte = Utilisateur(email=email)
+    try:
+        compte.definir_mot_de_passe(mot_de_passe)
+    except ValueError as exc:
+        return refuser(str(exc))
+
+    compte.client = Client(**champs)
     db.session.add(compte)
     db.session.commit()
     login_user(compte)
