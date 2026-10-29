@@ -225,6 +225,33 @@ Copy-Item .env.example .env   # puis remplir SECRET_KEY
 le Python global au lieu de celui du venv. Port 5000 déjà utilisé : un autre
 serveur tourne déjà (le fermer, ou lancer avec `$env:PORT = "5001"`).
 
+## Travailler dans VS Code
+
+Le dossier `.vscode/` configure le projet : le Python du venv est choisi
+automatiquement (chaque nouveau terminal active le venv), les tests
+apparaissent dans le panneau **Tests**, et les commandes courantes sont des
+tâches.
+
+1. Ouvrir le projet **depuis Ubuntu (WSL)** : `cd` dans le dossier du projet,
+   puis `code .`. En bas à gauche, VS Code affiche « WSL: Ubuntu ». Accepter
+   les extensions recommandées (Python, Python Debugger, WSL).
+2. Première fois : menu **Terminal → Exécuter la tâche…** →
+   « Installer le projet (première fois) », puis
+   « Créer ou changer le compte gérant » (le mot de passe se tape dans le
+   terminal).
+
+| Pour… | Dans VS Code |
+|---|---|
+| Lancer le site (http://localhost:5000) | **F5** (« Lancer le site », avec points d'arrêt) ou **Ctrl+Shift+B** ; arrêter : **Maj+F5** ou Ctrl+C |
+| Lancer les tests | Panneau **Tests** (icône fiole), ou tâche « Tests » |
+| Vérifier comme la CI | Tâche « Tout vérifier (style + tests) » |
+| Récupérer les nouveautés de GitHub | Tâche « Mettre à jour (GitHub + base) » (git pull + migrations) |
+| Remettre les données de démo | Tâche « Remettre les données de démo » |
+| Créer le compte gérant / changer son mot de passe | Tâche « Créer ou changer le compte gérant » |
+| Après une modification d'un modèle | Tâche « Nouvelle migration » |
+
+Les tâches s'ouvrent avec **Ctrl+Shift+P → « Tasks: Run Task »**.
+
 ## Interface web
 
 Une fois le serveur lancé, ouvrir http://localhost:5000/ :

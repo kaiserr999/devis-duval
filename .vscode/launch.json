@@ -1,0 +1,43 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Lancer le site (http://localhost:5000)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flask",
+      "args": [
+        "run",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5000",
+        "--no-debugger",
+        "--no-reload"
+      ],
+      "env": {
+        "FLASK_APP": "run.py",
+        "FLASK_DEBUG": "1"
+      },
+      "jinja": true,
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Mettre la base à jour"
+    },
+    {
+      "name": "Déboguer les tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "-q",
+        "tests"
+      ],
+      "purpose": [
+        "debug-test"
+      ],
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
