@@ -1,12 +1,11 @@
 """Pages des devis : liste, détail, création, modification, statut."""
-from flask import Response, flash, redirect, render_template, request, \
-    url_for
+from flask import flash, redirect, render_template, request, url_for
 
 from app.extensions import db
 from app.models import Client, Devis
 from app.models.devis import STATUTS
 from app.pages import LIBELLES_STATUT, essayer, nombre, pages_bp
-from app.pdf import generer_pdf, nom_fichier
+from app.pdf import reponse_pdf
 from app.routes.devis import TRANSITIONS, appliquer_lignes, \
     appliquer_statut, construire_lignes, nouveau_devis, trouver_devis
 
@@ -103,10 +102,8 @@ def detail_devis(devis_id):
 @pages_bp.get("/devis/<int:devis_id>/pdf")
 def pdf_devis(devis_id):
     """Télécharge le devis en PDF (?apercu=1 : l'ouvre dans le navigateur)."""
-    devis = trouver_devis(devis_id)
-    mode = "inline" if request.args.get("apercu") else "attachment"
-    return Response(generer_pdf(devis), mimetype="application/pdf", headers={
-        "Content-Disposition": f'{mode}; filename="{nom_fichier(devis)}"'})
+    return reponse_pdf(trouver_devis(devis_id),
+                       apercu=bool(request.args.get("apercu")))
 
 
 def exiger_brouillon(devis):
@@ -143,12 +140,15 @@ def modifier_devis(devis_id):
 def changer_statut(devis_id):
     devis = trouver_devis(devis_id)
     nouveau = request.form.get("statut")
-    _, erreur = essayer(appliquer_statut, devis, nouveau)
+    notification, erreur = essayer(appliquer_statut, devis, nouveau)
     if erreur:
         flash(erreur, "erreur")
     else:
         flash(f"Devis {devis.numero} : statut "
               f"« {LIBELLES_STATUT[nouveau]} ».", "succes")
+        # Passage à « envoyé » : résultat de l'email au client
+        if notification is not None:
+            flash(*notification.message())
     return redirect(url_for("pages.detail_devis", devis_id=devis_id))
 
 

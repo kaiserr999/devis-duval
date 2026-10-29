@@ -22,6 +22,14 @@ class Client(db.Model):
     cree_le = db.Column(db.DateTime, nullable=False, default=maintenant)
 
     devis = db.relationship("Devis", back_populates="client")
+    # Compte de l'espace client (None tant que le client ne l'a pas créé)
+    compte = db.relationship("Utilisateur", back_populates="client",
+                             uselist=False)
+
+    @property
+    def a_un_contact(self):
+        """Vrai si le client a un email ou un téléphone."""
+        return bool(self.email or self.telephone)
 
     def to_dict(self):
         """Représentation JSON du client."""

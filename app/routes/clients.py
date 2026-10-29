@@ -30,14 +30,21 @@ def valider_client(donnees):
         abort(400, description="Le champ 'nom' est obligatoire.")
     if propres["email"] is not None and "@" not in propres["email"]:
         abort(400, description="Le champ 'email' est invalide.")
+    # Il faut pouvoir joindre le client pour lui envoyer ses devis
+    if propres["email"] is None and propres["telephone"] is None:
+        abort(400, description="Indiquez au moins un email ou un "
+                               "téléphone.")
     return propres
 
 
 def supprimer(client):
-    """Supprime un client, ou lève 409 s'il a des devis."""
+    """Supprime un client (et son compte client), ou lève 409 s'il a des
+    devis."""
     if client.devis:
         abort(409, description="Ce client a des devis : il ne peut pas "
                                "être supprimé.")
+    if client.compte is not None:
+        db.session.delete(client.compte)
     db.session.delete(client)
     db.session.commit()
 
@@ -83,7 +90,8 @@ def creer_client():
         schema:
           $ref: '#/definitions/Client'
       400:
-        description: Données invalides (nom manquant, email invalide...)
+        description: Données invalides (nom manquant, email invalide, ni
+          email ni téléphone...)
         schema:
           $ref: '#/definitions/Erreur'
     """

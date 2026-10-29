@@ -4,7 +4,7 @@ from decimal import Decimal
 import click
 
 from app.extensions import db
-from app.models import Client, Devis, LigneDevis
+from app.models import Client, Devis, LigneDevis, Utilisateur
 
 CLIENTS = [
     {
@@ -85,9 +85,11 @@ def seed_data():
 
 
 def vider_tables():
-    """Supprime toutes les données (lignes, devis, clients)."""
+    """Supprime toutes les données (lignes, devis, comptes clients,
+    clients). Le compte du gérant est conservé."""
     LigneDevis.query.delete()
     Devis.query.delete()
+    Utilisateur.query.filter(Utilisateur.client_id.isnot(None)).delete()
     Client.query.delete()
     db.session.commit()
 

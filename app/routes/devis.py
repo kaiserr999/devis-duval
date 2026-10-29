@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, request
 from app.extensions import db
 from app.models import Client, Devis, LigneDevis
 from app.models.devis import STATUTS
+from app.notifications import notifier_devis_envoye
 from app.validation import lire_json
 
 devis_bp = Blueprint("devis", __name__, url_prefix="/api/devis")
@@ -103,12 +104,20 @@ def prochain_numero():
     return f"{prefixe}{dernier + 1:04d}"
 
 
+def exiger_contact(client, code=400):
+    """Lève une erreur si le client n'a ni email ni téléphone."""
+    if not client.a_un_contact:
+        abort(code, description=f"{client.nom} n'a ni email ni téléphone : "
+                                "complétez sa fiche client d'abord.")
+
+
 def nouveau_devis(client, donnees):
     """Crée et enregistre un devis en brouillon pour ce client. Lève 400.
 
     numero, statut et total envoyés par le client sont ignorés.
     Le devis n'est rattaché au client qu'une fois les lignes validées.
     """
+    exiger_contact(client)
     devis = Devis(numero=prochain_numero(), statut="brouillon")
     appliquer_lignes(devis, construire_lignes(donnees))
     devis.client = client
@@ -118,17 +127,28 @@ def nouveau_devis(client, donnees):
 
 
 def appliquer_statut(devis, nouveau):
-    """Fait avancer le statut du devis et enregistre. Lève 400 ou 409."""
+    """Fait avancer le statut du devis et enregistre. Lève 400 ou 409.
+
+    Passage à « envoyé » : le devis part par email au client (PDF joint,
+    lien vers son espace client). Renvoie alors la Notification (None
+    pour les autres statuts).
+    """
     if nouveau not in STATUTS:
         abort(400, description="Statut inconnu. Valeurs possibles : "
                                + ", ".join(STATUTS) + ".")
     if nouveau not in TRANSITIONS[devis.statut]:
         abort(409, description=f"Passage de '{devis.statut}' à "
                                f"'{nouveau}' interdit.")
-    if nouveau == "envoye" and not devis.lignes:
-        abort(409, description="Impossible d'envoyer un devis sans ligne.")
+    if nouveau == "envoye":
+        if not devis.lignes:
+            abort(409, description="Impossible d'envoyer un devis sans "
+                                   "ligne.")
+        exiger_contact(devis.client, code=409)
     devis.statut = nouveau
     db.session.commit()
+    if nouveau == "envoye":
+        return notifier_devis_envoye(devis)
+    return None
 
 
 def trouver_devis(devis_id):
@@ -216,7 +236,8 @@ def creer_devis():
         schema:
           $ref: '#/definitions/Devis'
       400:
-        description: Données invalides ou client inexistant
+        description: Données invalides, client inexistant ou sans email
+          ni téléphone
         schema:
           $ref: '#/definitions/Erreur'
     """
@@ -309,6 +330,9 @@ def modifier_devis(devis_id):
 @devis_bp.patch("/<int:devis_id>/statut")
 def changer_statut(devis_id):
     """Fait avancer le statut : brouillon -> envoye -> accepte/refuse.
+
+    Passage à « envoye » : le devis est envoyé par email au client (PDF
+    joint, lien de création de son espace client), s'il a un email.
     ---
     tags: [Devis]
     parameters:
@@ -341,7 +365,8 @@ def changer_statut(devis_id):
         schema:
           $ref: '#/definitions/Erreur'
       409:
-        description: Transition interdite ou devis sans ligne
+        description: Transition interdite, devis sans ligne ou client
+          sans email ni téléphone
         schema:
           $ref: '#/definitions/Erreur'
     """

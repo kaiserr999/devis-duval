@@ -5,6 +5,6 @@
   <p class="erreur-code">{{ erreur.code }}</p>
   <h1>{{ 'Page introuvable' if erreur.code == 404 else erreur.name }}</h1>
   <p class="sous-titre">{{ erreur.description }}</p>
-  <a class="bouton" href="{{ url_for('pages.liste_devis') }}">Retour aux devis</a>
+  <a class="bouton" href="{{ url_accueil }}">Retour à l'accueil</a>
 </div>
 {% endblock %}

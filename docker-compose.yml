@@ -10,6 +10,14 @@ services:
       - SEED_DEMO=${SEED_DEMO:-0}
       - GERANT_EMAIL=${GERANT_EMAIL:-}
       - GERANT_MOT_DE_PASSE=${GERANT_MOT_DE_PASSE:-}
+      # Optionnels : serveur d'email (sinon emails affichés dans les logs)
+      - MAIL_SERVER=${MAIL_SERVER:-}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_USE_TLS=${MAIL_USE_TLS:-1}
+      - MAIL_USE_SSL=${MAIL_USE_SSL:-0}
+      - MAIL_EXPEDITEUR=${MAIL_EXPEDITEUR:-}
     volumes:
       # Volume nommé : garde la base entre deux redémarrages, avec les
       # droits de l'utilisateur non root du conteneur

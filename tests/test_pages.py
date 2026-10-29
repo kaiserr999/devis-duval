@@ -81,8 +81,8 @@ def test_liste_et_fiche_client(client, brouillon):
 
 def test_creer_client(client):
     reponse = client.post("/clients/nouveau", data={
-        "nom": "  SCI Les Tilleuls ", "email": "", "telephone": "",
-        "adresse": "3 rue Haute"})
+        "nom": "  SCI Les Tilleuls ", "email": "",
+        "telephone": "04 78 00 11 22", "adresse": "3 rue Haute"})
     assert reponse.status_code == 302
     nouveau = db.session.scalars(db.select(Client)).one()
     assert nouveau.nom == "SCI Les Tilleuls"
@@ -102,7 +102,8 @@ def test_creer_client_invalide_garde_la_saisie(client):
 
 def test_modifier_client(client, mme_martin):
     reponse = client.post(f"/clients/{mme_martin.id}/modifier",
-                          data={"nom": "Mme Martin-Durand"})
+                          data={"nom": "Mme Martin-Durand",
+                                "telephone": "06 11 11 11 11"})
     assert reponse.status_code == 302
     assert mme_martin.nom == "Mme Martin-Durand"
     assert mme_martin.email is None
@@ -240,4 +241,5 @@ def test_formulaire_sans_jeton_csrf_refuse(app, client):
     assert reponse.status_code == 400
     assert db.session.scalars(db.select(Client)).first() is None
     # L'API JSON n'utilise pas de jeton CSRF
-    assert client.post("/api/clients", json={"nom": "API"}).status_code == 201
+    assert client.post("/api/clients", json={
+        "nom": "API", "telephone": "06 00 00 00 00"}).status_code == 201

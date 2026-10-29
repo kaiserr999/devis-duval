@@ -33,6 +33,29 @@
   </dl>
 </section>
 
+<section class="carte" aria-labelledby="titre-espace">
+  <h2 id="titre-espace">Espace client</h2>
+  {% if client.compte %}
+  <p class="sous-titre">
+    Compte créé le {{ client.compte.cree_le|date_fr }} ({{ client.compte.email }}).
+    Le client y voit ses devis envoyés, acceptés et refusés.
+  </p>
+  {% elif client.email %}
+  <p class="sous-titre">
+    Pas encore de compte. Le lien de création est envoyé à {{ client.email }}
+    avec chaque devis, ou dès maintenant avec le bouton ci-dessous.
+  </p>
+  <form method="post" action="{{ url_for('pages.inviter', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="bouton bouton-secondaire" type="submit">Envoyer l'invitation par email</button>
+  </form>
+  {% else %}
+  <p class="sous-titre">
+    Ajoutez un email à ce client pour qu'il reçoive ses devis et puisse créer son espace.
+  </p>
+  {% endif %}
+</section>
+
 <section class="carte" aria-labelledby="titre-devis">
   <h2 id="titre-devis">Devis ({{ devis|length }})</h2>
   {% if devis %}

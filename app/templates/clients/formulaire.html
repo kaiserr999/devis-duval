@@ -21,13 +21,18 @@
       <input id="nom" name="nom" required maxlength="120" value="{{ valeurs.nom }}"
              autocomplete="name" {% if creation %}autofocus{% endif %}>
     </div>
+    <p class="aide champ-large" id="aide-contact">
+      <span class="obligatoire" aria-hidden="true">*</span>
+      Email ou téléphone : au moins un des deux. Avec un email, le client reçoit
+      ses devis et peut créer son espace client.
+    </p>
     <div class="champ">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" maxlength="120" value="{{ valeurs.email }}" autocomplete="email">
+      <label for="email">Email <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="email" name="email" type="email" maxlength="120" value="{{ valeurs.email }}" autocomplete="email" aria-describedby="aide-contact">
     </div>
     <div class="champ">
-      <label for="telephone">Téléphone</label>
-      <input id="telephone" name="telephone" type="tel" maxlength="30" value="{{ valeurs.telephone }}" autocomplete="tel">
+      <label for="telephone">Téléphone <span class="obligatoire" aria-hidden="true">*</span></label>
+      <input id="telephone" name="telephone" type="tel" maxlength="30" value="{{ valeurs.telephone }}" autocomplete="tel" aria-describedby="aide-contact">
     </div>
     <div class="champ champ-large">
       <label for="adresse">Adresse</label>

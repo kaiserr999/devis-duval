@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"></head>
+<body style="margin:0; padding:24px; background:#f6f5f2; font-family:Arial, Helvetica, sans-serif; color:#1f2328; line-height:1.5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; margin:0 auto; background:#ffffff; border:1px solid #dcd9d2; border-radius:8px;">
+    <tr>
+      <td style="padding:18px 24px; background:#153a53; color:#ffffff; font-weight:bold; font-size:16px; border-radius:8px 8px 0 0;">
+        {{ entreprise.nom }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px;">
+        <p style="margin:0 0 16px;">Bonjour {{ client.nom }},</p>
+        {% block contenu %}{% endblock %}
+        <p style="margin:24px 0 0;">Cordialement,<br>{{ entreprise.nom }}</p>
+        <p style="margin:4px 0 0; color:#5f6670; font-size:13px;">{{ entreprise.telephone }} · {{ entreprise.email }}</p>
+      </td>
+    </tr>
+  </table>
+  <p style="max-width:560px; margin:12px auto 0; color:#8a8f96; font-size:12px; text-align:center;">
+    Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+    <span style="word-break:break-all;">{{ lien }}</span>
+  </p>
+</body>
+</html>

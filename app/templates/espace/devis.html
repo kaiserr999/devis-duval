@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titre %}Devis {{ devis.numero }}{% endblock %}
+{% block contenu %}
+<p><a href="{{ url_for('espace.accueil') }}">← Mes devis</a></p>
+
+<div class="entete">
+  <div class="entete-titre">
+    <h1>Devis <span class="numero">{{ devis.numero }}</span>
+      <span class="statut statut-{{ devis.statut }}">{{ LIBELLES_STATUT[devis.statut] }}</span></h1>
+    <p class="sous-titre">
+      Émis le {{ devis.date_creation|date_fr }} par {{ entreprise.nom }}
+      · valable jusqu'au {{ valable_jusqu_au|date_fr }}
+    </p>
+  </div>
+  <div class="actions">
+    <a class="bouton bouton-secondaire" href="{{ url_for('espace.pdf_devis', devis_id=devis.id, apercu=1) }}"
+       target="_blank" rel="noopener">Aperçu PDF</a>
+    <a class="bouton" href="{{ url_for('espace.pdf_devis', devis_id=devis.id) }}">Télécharger le PDF</a>
+  </div>
+</div>
+
+{% if devis.statut == 'envoye' %}
+<p class="alerte alerte-info">
+  Pour accepter ce devis, renvoyez le PDF signé avec la mention «&nbsp;Bon pour accord&nbsp;»,
+  ou contactez {{ entreprise.nom }} au {{ entreprise.telephone }}.
+</p>
+{% endif %}
+
+<div class="tableau-defilant">
+  <table>
+    <thead>
+      <tr><th>Description</th><th class="nombre">Quantité</th><th class="nombre">Prix unitaire</th><th class="nombre">Sous-total</th></tr>
+    </thead>
+    <tbody>
+      {% for ligne in devis.lignes %}
+      <tr>
+        <td>{{ ligne.description }}</td>
+        <td class="nombre">{{ ligne.quantite|nombre }}</td>
+        <td class="nombre">{{ ligne.prix_unitaire|euro }}</td>
+        <td class="nombre">{{ ligne.sous_total|euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">Total</td><td class="nombre">{{ devis.total|euro }}</td></tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

@@ -44,6 +44,23 @@ class Config:
     }
     # Durée de validité affichée sur le devis
     DEVIS_VALIDITE_JOURS = 30
+    # Durée de validité du lien de création du compte client (email)
+    INVITATION_VALIDITE_JOURS = 30
+
+    # Emails aux clients (devis envoyé, invitation à l'espace client).
+    # Sans MAIL_SERVER, l'email est affiché dans le terminal au lieu
+    # d'être envoyé (pratique en développement).
+    MAIL_SERVER = os.environ.get("MAIL_SERVER") or None
+    MAIL_PORT = int(os.environ.get("MAIL_PORT") or 587)
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME") or None
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD") or None
+    # STARTTLS (port 587) par défaut ; MAIL_USE_SSL=1 pour le port 465
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "1") == "1"
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL") == "1"
+    MAIL_EXPEDITEUR = (os.environ.get("MAIL_EXPEDITEUR")
+                       or ENTREPRISE["email"])
+    # Tests : emails gardés en mémoire (app.extensions["emails_envoyes"])
+    MAIL_MEMOIRE = False
 
 
 class TestConfig(Config):
@@ -51,6 +68,7 @@ class TestConfig(Config):
 
     TESTING = True
     SECRET_KEY = "cle-de-test"
+    MAIL_MEMOIRE = True
     # Formulaires postés sans jeton ; la protection CSRF a son propre test
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"

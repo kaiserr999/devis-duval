@@ -45,15 +45,24 @@ def test_creer_client(client):
     assert db.session.get(Client, donnees["id"]) is not None
 
 
-def test_creer_client_nom_seul(client):
-    reponse = client.post("/api/clients", json={"nom": "SCI Tilleuls"})
+def test_creer_client_telephone_seul(client):
+    reponse = client.post("/api/clients", json={"nom": "SCI Tilleuls",
+                                                "telephone": "04 78 00 11 22"})
     assert reponse.status_code == 201
     assert reponse.get_json()["email"] is None
 
 
+def test_creer_client_email_seul(client):
+    reponse = client.post("/api/clients", json={"nom": "SCI Tilleuls",
+                                                "email": "sci@example.com"})
+    assert reponse.status_code == 201
+    assert reponse.get_json()["telephone"] is None
+
+
 def test_creer_ignore_id_et_champs_inconnus(client):
     reponse = client.post("/api/clients",
-                          json={"nom": "Test", "id": 999, "pirate": 1})
+                          json={"nom": "Test", "email": "t@example.com",
+                                "id": 999, "pirate": 1})
     assert reponse.status_code == 201
     donnees = reponse.get_json()
     assert donnees["id"] != 999
@@ -67,6 +76,9 @@ def test_creer_ignore_id_et_champs_inconnus(client):
     ({"nom": "x" * 121}, "120"),
     ({"nom": "Test", "email": "pas-un-email"}, "email"),
     ({"nom": "Test", "telephone": "0" * 31}, "30"),
+    ({"nom": "Test"}, "email ou un téléphone"),
+    ({"nom": "Test", "email": "  ", "telephone": ""},
+     "email ou un téléphone"),
 ])
 def test_creer_client_invalide(client, corps, message):
     reponse = client.post("/api/clients", json=corps)

@@ -33,6 +33,8 @@ TEMPLATE = {
         },
         "ClientEntree": {
             "type": "object",
+            "description": "nom obligatoire, et au moins un email ou un "
+                           "téléphone.",
             "required": ["nom"],
             "properties": {
                 "nom": {"type": "string", "maxLength": 120,
