@@ -423,5 +423,9 @@ def test_seed_reset_garde_le_gerant(app, gerant, compte):
     db.session.expunge_all()  # la commande tourne dans sa propre session
     resultat = app.test_cli_runner().invoke(args=["seed", "--reset"])
     assert resultat.exit_code == 0
-    comptes = db.session.scalars(db.select(Utilisateur)).all()
-    assert [c.email for c in comptes] == [GERANT_EMAIL]
+    comptes = db.session.scalars(
+        db.select(Utilisateur).order_by(Utilisateur.id)).all()
+    # Le gérant est gardé, l'ancien compte client est supprimé, le compte
+    # client de démo est recréé
+    assert [c.email for c in comptes] == [
+        GERANT_EMAIL, "gestion@sci-tilleuls.example.com"]

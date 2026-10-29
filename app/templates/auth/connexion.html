@@ -1,9 +1,17 @@
 {% extends "base.html" %}
-{% block titre %}Connexion{% endblock %}
+{% block titre %}{{ 'Espace client' if espace_client else 'Connexion' }}{% endblock %}
 {% block contenu %}
 <div class="connexion">
+  {% if espace_client %}
+  <h1>Espace client</h1>
+  <p class="sous-titre">
+    Consultez vos devis {{ entreprise.nom }} en ligne. Connectez-vous avec
+    l'email auquel vous avez reçu votre devis.
+  </p>
+  {% else %}
   <h1>Connexion</h1>
-  <p class="sous-titre">Gérant ou client de Peinture Duval : connectez-vous avec votre email.</p>
+  <p class="sous-titre">Espace du gérant de {{ entreprise.nom }}.</p>
+  {% endif %}
 
   {% if erreur %}<p class="alerte alerte-erreur" role="alert">{{ erreur }}</p>{% endif %}
 
@@ -22,5 +30,26 @@
     </div>
     <button class="bouton" type="submit">Se connecter</button>
   </form>
+
+  {% if espace_client %}
+  <p class="aide">
+    Première visite ? Ouvrez le lien « Créer mon espace client » reçu par email
+    avec votre devis.
+  </p>
+  {% if demo %}
+  <div class="carte demo">
+    <h2>Compte client de démonstration</h2>
+    <dl class="infos">
+      <dt>Email</dt><dd><code>{{ demo[0] }}</code></dd>
+      <dt>Mot de passe</dt><dd><code>{{ demo[1] }}</code></dd>
+    </dl>
+  </div>
+  {% endif %}
+  <p class="aide"><a href="{{ url_for('auth.connexion') }}">Vous êtes le gérant ? Connexion gérant</a></p>
+  {% else %}
+  <p class="aide">
+    <a href="{{ url_for('auth.connexion', suivant='/espace/') }}">Vous êtes client ? Accéder à l'espace client</a>
+  </p>
+  {% endif %}
 </div>
 {% endblock %}

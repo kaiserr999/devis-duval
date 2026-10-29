@@ -40,7 +40,10 @@ def non_connecte():
     """401 JSON pour l'API, redirection vers la connexion pour les pages."""
     if request.path.startswith("/api/"):
         return jsonify({"erreur": "Authentification requise."}), 401
-    flash("Connectez-vous pour accéder à l'application.", "info")
+    if request.path.startswith("/espace"):
+        flash("Connectez-vous pour accéder à votre espace client.", "info")
+    else:
+        flash("Connectez-vous pour accéder à l'application.", "info")
     return redirect(url_for("auth.connexion", suivant=request.full_path
                             if request.query_string else request.path))
 
@@ -93,13 +96,33 @@ def adresse_sure(cible):
     return cible
 
 
+def compte_client_demo():
+    """(email, mot de passe) du compte client de démo s'il existe en base
+    (créé par flask seed), pour l'afficher sur la connexion client."""
+    from app.seed import CLIENTS, COMPTE_CLIENT_DEMO
+    email = CLIENTS[COMPTE_CLIENT_DEMO["index_client"]]["email"].lower()
+    existe = db.session.scalars(
+        db.select(Utilisateur.id).where(Utilisateur.email == email)).first()
+    return (email, COMPTE_CLIENT_DEMO["mot_de_passe"]) if existe else None
+
+
+def page_connexion(suivant, statut=200, **contexte):
+    """Page de connexion ; version « Espace client » si on vient de
+    /espace/ (lien Espace client du menu)."""
+    espace_client = (suivant or "").startswith("/espace")
+    return render_template(
+        "auth/connexion.html", suivant=suivant, espace_client=espace_client,
+        demo=compte_client_demo() if espace_client else None,
+        **contexte), statut
+
+
 @auth_bp.route("/connexion", methods=["GET", "POST"])
 def connexion():
     suivant = adresse_sure(request.values.get("suivant"))
     if current_user.is_authenticated:
         return redirect(suivant or page_accueil(current_user))
     if request.method == "GET":
-        return render_template("auth/connexion.html", suivant=suivant)
+        return page_connexion(suivant)
 
     email = normaliser_email(request.form.get("email"))
     mot_de_passe = request.form.get("mot_de_passe", "")
@@ -111,9 +134,8 @@ def connexion():
         login_user(utilisateur)
         return redirect(suivant or page_accueil(utilisateur))
 
-    return render_template("auth/connexion.html", suivant=suivant,
-                           email=email,
-                           erreur="Email ou mot de passe incorrect."), 401
+    return page_connexion(suivant, 401, email=email,
+                          erreur="Email ou mot de passe incorrect.")
 
 
 @auth_bp.route("/activation/<jeton>", methods=["GET", "POST"])

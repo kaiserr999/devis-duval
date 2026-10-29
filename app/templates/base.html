@@ -30,6 +30,14 @@
           <button type="submit" title="Connecté : {{ current_user.email }}">Déconnexion</button>
         </form>
       </nav>
+      {% else %}
+      <nav aria-label="Navigation principale">
+        {% set espace_demande = (suivant or request.args.get('suivant') or '').startswith('/espace') %}
+        <a href="{{ url_for('auth.connexion', suivant='/espace/') }}"
+           {% if espace_demande or request.endpoint == 'auth.activation' %}aria-current="page"{% endif %}>Espace client</a>
+        <a href="{{ url_for('auth.connexion') }}"
+           {% if request.endpoint == 'auth.connexion' and not espace_demande %}aria-current="page"{% endif %}>Espace gérant</a>
+      </nav>
       {% endif %}
     </div>
   </header>

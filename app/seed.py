@@ -6,6 +6,10 @@ import click
 from app.extensions import db
 from app.models import Client, Devis, LigneDevis, Utilisateur
 
+# Compte de l'espace client de démo (SCI Les Tilleuls) : permet de montrer
+# l'espace client sans passer par le lien d'invitation. Données fictives.
+COMPTE_CLIENT_DEMO = {"index_client": 1, "mot_de_passe": "ClientDemo2026"}
+
 CLIENTS = [
     {
         "nom": "Martine Lefebvre",
@@ -57,6 +61,10 @@ DEVIS = [
     (0, "D-2026-0005", "brouillon", [
         ("Peinture cage d'escalier (m²)", "38.5", "24.00"),
     ]),
+    (1, "D-2026-0006", "accepte", [
+        ("Peinture hall d'entrée (m²)", "24", "19.50"),
+        ("Lessivage des murs avant peinture (m²)", "24", "4.00"),
+    ]),
 ]
 
 
@@ -79,6 +87,14 @@ def seed_data():
             devis.lignes.append(ligne)
         devis.calculer_total()
         db.session.add(devis)
+
+    client_demo = clients[COMPTE_CLIENT_DEMO["index_client"]]
+    email_demo = client_demo.email.lower()
+    if db.session.query(Utilisateur.id).filter_by(email=email_demo).first() \
+            is None:
+        compte = Utilisateur(email=email_demo, client=client_demo)
+        compte.definir_mot_de_passe(COMPTE_CLIENT_DEMO["mot_de_passe"])
+        db.session.add(compte)
 
     db.session.commit()
     return True
@@ -104,6 +120,9 @@ def seed_command(reset):
         click.echo("Tables vidées.")
     if seed_data():
         click.echo(f"{len(CLIENTS)} clients et {len(DEVIS)} devis insérés.")
+        client_demo = CLIENTS[COMPTE_CLIENT_DEMO["index_client"]]
+        click.echo(f"Compte client de démo : {client_demo['email']} / "
+                   f"{COMPTE_CLIENT_DEMO['mot_de_passe']}")
     else:
         click.echo("La base contient déjà des clients : rien n'a été "
                    "inséré (utiliser --reset pour repartir de zéro).")
