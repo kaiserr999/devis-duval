@@ -27,6 +27,9 @@ class Devis(db.Model):
     statut = db.Column(db.String(20), nullable=False, default="brouillon")
     total = db.Column(db.Numeric(10, 2), nullable=False,
                       default=Decimal("0.00"))
+    # Date de la réponse du client depuis son espace (accepté ou refusé en
+    # ligne) ; vide si le gérant a saisi la réponse lui-même
+    reponse_en_ligne_le = db.Column(db.DateTime)
 
     client = db.relationship("Client", back_populates="devis")
     lignes = db.relationship(
@@ -54,5 +57,7 @@ class Devis(db.Model):
                               if self.date_creation else None),
             "statut": self.statut,
             "total": str(self.total) if self.total is not None else None,
+            "reponse_en_ligne_le": (self.reponse_en_ligne_le.isoformat()
+                                    if self.reponse_en_ligne_le else None),
             "lignes": [ligne.to_dict() for ligne in self.lignes],
         }

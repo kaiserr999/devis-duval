@@ -3,16 +3,16 @@ Bonjour {{ client.nom }},
 Veuillez trouver ci-joint notre devis {{ devis.numero }} d'un montant de {{ devis.total|euro }}, valable jusqu'au {{ valable_jusqu_au|date_fr }}.
 
 {% if compte_existe -%}
-Vous pouvez aussi le consulter dans votre espace client :
+Vous pouvez le consulter, l'accepter ou le refuser en ligne dans votre espace client :
 {{ lien }}
 {%- else -%}
-Créez votre espace client pour retrouver tous vos devis en ligne. Votre identifiant sera votre adresse email ({{ client.email }}) :
+Créez votre espace client pour consulter vos devis et les accepter ou les refuser en ligne. Votre identifiant sera votre adresse email ({{ client.email }}) :
 {{ lien }}
 
 Ce lien est valable {{ jours }} jours.
 {%- endif %}
 
-Pour accepter ce devis, renvoyez-le signé avec la mention « Bon pour accord », ou contactez-nous.
+Vous pouvez aussi nous renvoyer le devis signé avec la mention « Bon pour accord », ou nous contacter.
 
 Cordialement,
 {{ entreprise.nom }}

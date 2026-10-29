@@ -1,9 +1,11 @@
-"""Emails aux clients : devis envoyé (PDF joint) et invitation à créer
-son espace client."""
+"""Emails aux clients (devis envoyé avec le PDF, invitation à créer son
+espace client) et au gérant (réponse d'un client en ligne)."""
 from flask import current_app, render_template, url_for
 
 from app.emails import construire, envoyer
+from app.extensions import db
 from app.invitations import creer_jeton
+from app.models import Utilisateur
 from app.pdf import generer_pdf, nom_fichier, valable_jusqu_au
 
 
@@ -84,3 +86,27 @@ def inviter_client(client):
     entreprise = current_app.config["ENTREPRISE"]["nom"]
     return _envoyer(client, f"Votre espace client {entreprise}",
                     "invitation")
+
+
+def notifier_reponse_client(devis):
+    """Prévient le(s) gérant(s) qu'un client a accepté ou refusé son devis
+    en ligne. Un échec d'envoi est seulement journalisé : la réponse du
+    client est déjà enregistrée. Renvoie le nombre d'emails envoyés."""
+    gerants = db.session.scalars(
+        db.select(Utilisateur.email).where(Utilisateur.client_id.is_(None))
+        .order_by(Utilisateur.id)).all()
+    decision = "accepté" if devis.statut == "accepte" else "refusé"
+    sujet = f"Devis {devis.numero} {decision} par {devis.client.nom}"
+    texte = render_template(
+        "emails/reponse_client.txt", devis=devis, decision=decision,
+        lien=url_for("pages.detail_devis", devis_id=devis.id,
+                     _external=True))
+    envoyes = 0
+    for email in gerants:
+        try:
+            envoyer(construire(email, sujet, texte))
+            envoyes += 1
+        except OSError:
+            current_app.logger.exception("Échec de l'envoi de l'email à %s",
+                                         email)
+    return envoyes

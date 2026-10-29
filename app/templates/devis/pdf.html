@@ -113,7 +113,7 @@
 <p class="discret">
   Devis valable {{ validite_jours }} jours à compter de sa date d'émission.
   Pour l'accepter, merci de le retourner daté et signé avec la mention
-  « Bon pour accord ».
+  « Bon pour accord », ou de l'accepter en ligne depuis votre espace client.
 </p>
 
 <br>
@@ -125,6 +125,10 @@
     <td width="4%"></td>
     <td width="46%" class="bloc">
       <div class="etiquette">Bon pour accord : date et signature du client</div>
+      {% if devis.statut == 'accepte' and devis.reponse_en_ligne_le %}
+      Accepté en ligne le {{ devis.reponse_en_ligne_le|date_fr }}
+      par {{ devis.client.nom }} (espace client).
+      {% endif %}
     </td>
   </tr>
 </table>

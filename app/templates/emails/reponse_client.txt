@@ -1,0 +1,11 @@
+Bonjour,
+
+{{ devis.client.nom }} a {{ decision }} en ligne le devis {{ devis.numero }} ({{ devis.total|euro }}), depuis son espace client.
+
+{% if devis.statut == 'accepte' -%}
+Pensez à le recontacter pour planifier les travaux{% if devis.client.telephone %} : {{ devis.client.telephone }}{% endif %}.
+{%- else -%}
+Vous pouvez le recontacter pour en connaître la raison{% if devis.client.telephone %} : {{ devis.client.telephone }}{% endif %}.
+{%- endif %}
+
+Voir le devis : {{ lien }}

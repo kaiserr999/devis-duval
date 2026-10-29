@@ -89,6 +89,11 @@ TEMPLATE = {
                 "date_creation": {"type": "string", "format": "date-time"},
                 "statut": {"type": "string", "enum": list(STATUTS)},
                 "total": dict(MONTANT, example="25.00"),
+                "reponse_en_ligne_le": {
+                    "type": "string", "format": "date-time",
+                    "x-nullable": True,
+                    "description": "Date de la réponse du client depuis "
+                                   "son espace (null sinon)"},
                 "lignes": {"type": "array",
                            "items": {"$ref": "#/definitions/Ligne"}},
             },

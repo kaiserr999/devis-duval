@@ -167,6 +167,9 @@ input, select {
 }
 input:focus, select:focus { outline: 2px solid var(--primaire); outline-offset: 1px; border-color: var(--primaire); }
 .aide { color: var(--discret); font-size: 0.85rem; margin: 0; }
+.case { display: flex; gap: 0.6rem; align-items: flex-start; font-weight: 500; font-size: 1rem; }
+.case input { width: auto; min-height: 0; margin: 0.3rem 0 0; flex: none; }
+.reponse { display: grid; gap: 0.9rem; }
 
 /* Tableau des lignes du devis */
 .lignes td { padding: 0.5rem; }

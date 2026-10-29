@@ -25,7 +25,8 @@ en PDF, prêt à être envoyé au client.
 - **Envoi par email** : quand un devis passe à « envoyé », le client le
   reçoit par email (PDF joint) avec un lien pour créer son espace client.
 - **Espace client** : le client crée son compte avec son email, puis
-  consulte ses devis (sauf les brouillons) et les télécharge en PDF.
+  consulte ses devis (sauf les brouillons), les télécharge en PDF et
+  **les accepte ou les refuse en ligne** ; le gérant est prévenu par email.
 - **PDF** : en-tête de l'entreprise, client, lignes, total, date de
   validité, cadre « Bon pour accord » ([exemple](docs/exemple-devis.pdf)).
 - **Connexion** du gérant et des clients : chacun ne voit que ses pages,
@@ -85,10 +86,12 @@ render.yaml          déploiement sur Render
 | Table          | Colonnes                                                                  |
 |----------------|---------------------------------------------------------------------------|
 | `clients`      | id, nom (obligatoire), email, telephone, adresse, cree_le                 |
-| `devis`        | id, client_id → clients, numero (unique), date_creation, statut, total    |
+| `devis`        | id, client_id → clients, numero (unique), date_creation, statut, total, reponse_en_ligne_le |
 | `lignes_devis` | id, devis_id → devis (ON DELETE CASCADE), description, quantite, prix_unitaire, sous_total |
 | `utilisateurs` | id, email (unique), mot_de_passe_hash, cree_le, client_id → clients (unique, ON DELETE CASCADE) |
 
+- `devis.reponse_en_ligne_le` : date à laquelle le client a accepté ou
+  refusé le devis depuis son espace (vide si le gérant a saisi la réponse).
 - `utilisateurs.client_id` vide : compte du gérant ; rempli : compte de
   l'espace client de ce client (un seul compte par client).
 - Montants en `DECIMAL(10,2)` et `decimal.Decimal` en Python, jamais en float.
@@ -236,6 +239,7 @@ Une fois le serveur lancé, ouvrir http://localhost:5000/ :
 | **Client** : création du compte (lien reçu par email) | `/activation/<jeton>` |
 | **Client** : mes devis | `/espace/` |
 | **Client** : détail et PDF d'un devis | `/espace/devis/<id>`, `/espace/devis/<id>/pdf` |
+| **Client** : accepter ou refuser (POST) | `/espace/devis/<id>/reponse` |
 
 Les pages appliquent **les mêmes règles que l'API** (validation, total calculé
 par le serveur, cycle des statuts) : elles appellent les fonctions de
@@ -293,6 +297,12 @@ seulement si `SESSION_COOKIE_SECURE=1`.
 4. Il se connecte ensuite sur `/connexion` et arrive sur **Mes devis**
    (`/espace/`) : ses devis envoyés, acceptés et refusés, avec le détail et
    le PDF. Les brouillons et les devis des autres clients restent invisibles.
+5. Sur un devis envoyé et encore valable, il clique sur **Accepter le
+   devis** (après avoir coché « Bon pour accord ») ou **Refuser le devis**.
+   Le statut change aussitôt (mêmes règles que l'API), la date de réponse
+   est enregistrée et affichée au gérant (détail du devis et PDF), et chaque
+   compte gérant reçoit un email. Un devis expiré
+   (`DEVIS_VALIDITE_JOURS`) ne peut plus être accepté en ligne.
 
 Le lien contient un jeton signé avec `SECRET_KEY` (itsdangerous) : il est
 valable 30 jours (`INVITATION_VALIDITE_JOURS`), ne sert qu'une fois (le
@@ -439,8 +449,8 @@ pycodestyle .
 - **Deux rôles seulement** : gérant (tout) et client (ses devis). Pas de
   « mot de passe oublié » pour les clients : le gérant ne peut que renvoyer
   le lien tant que le compte n'existe pas.
-- **Acceptation hors ligne** : le client consulte ses devis en ligne mais
-  les accepte encore en renvoyant le PDF signé ; le gérant change le statut.
+- **Acceptation en ligne simple** : la case « Bon pour accord » et la date
+  sont enregistrées, mais ce n'est pas une signature électronique certifiée.
 - **SQLite** : suffisant pour un gérant seul ; plusieurs utilisateurs
   simultanés demanderaient PostgreSQL.
 - **Démo gratuite** : base recréée à chaque redémarrage (voir

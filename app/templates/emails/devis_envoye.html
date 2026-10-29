@@ -6,12 +6,12 @@
   valable jusqu'au {{ valable_jusqu_au|date_fr }}.
 </p>
 {% if compte_existe %}
-<p style="margin:0 0 20px;">Vous pouvez aussi le consulter dans votre espace client.</p>
+<p style="margin:0 0 20px;">Vous pouvez le consulter, l'accepter ou le refuser en ligne dans votre espace client.</p>
 {% set bouton = "Voir mon espace client" %}
 {% else %}
 <p style="margin:0 0 20px;">
-  Créez votre espace client pour retrouver tous vos devis en ligne. Votre
-  identifiant sera votre adresse email ({{ client.email }}). Ce lien est
+  Créez votre espace client pour consulter vos devis et les accepter ou les
+  refuser en ligne. Votre identifiant sera votre adresse email ({{ client.email }}). Ce lien est
   valable {{ jours }} jours.
 </p>
 {% set bouton = "Créer mon espace client" %}
@@ -20,7 +20,7 @@
   <a href="{{ lien }}" style="display:inline-block; padding:12px 20px; background:#1d4e6f; color:#ffffff; text-decoration:none; border-radius:6px; font-weight:bold;">{{ bouton }}</a>
 </p>
 <p style="margin:0;">
-  Pour accepter ce devis, renvoyez-le signé avec la mention « Bon pour
-  accord », ou contactez-nous.
+  Vous pouvez aussi nous renvoyer le devis signé avec la mention « Bon pour
+  accord », ou nous contacter.
 </p>
 {% endblock %}
