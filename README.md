@@ -9,7 +9,8 @@ calculé côté serveur**, jamais saisi à la main. Chaque devis se télécharge
 en PDF, prêt à être envoyé au client.
 
 **Démo en ligne** : https://devis-duval.onrender.com (identifiants du gérant
-de démo sur demande). Offre gratuite de Render : le premier chargement après
+de démo sur demande ; l'**Espace client** du menu affiche un compte client de
+démo). Offre gratuite de Render : le premier chargement après
 une période d'inactivité peut prendre une minute, et les données de démo
 sont remises à zéro à chaque redémarrage (voir
 [Mise en ligne](#mise-en-ligne-render)).
@@ -317,6 +318,9 @@ seulement si `SESSION_COOKIE_SECURE=1`.
 
 ## Espace client et emails
 
+Dans le menu, **Espace client** mène à la connexion des clients (et
+**Espace gérant** à celle du gérant).
+
 1. Le gérant crée le client avec son email, puis un devis.
 2. Il clique sur **Marquer comme envoyé** : le client reçoit un email avec
    le devis en PDF et un lien **Créer mon espace client**. Le bouton
@@ -371,8 +375,17 @@ partagés (`Client`, `Devis`, `Ligne`, `Erreur`...) sont dans `app/swagger.py`.
 
 ## Données de démonstration
 
-`flask seed` insère 4 clients et 5 devis (12 lignes) dans la base, avec des
-totaux calculés par `calculer_total()`. La commande ne fait rien si la base
+`flask seed` insère 4 clients et 6 devis (14 lignes) dans la base, avec des
+totaux calculés par `calculer_total()`, ainsi qu'un **compte client de démo**
+pour montrer l'espace client sans passer par le lien d'invitation :
+
+| Espace | Email | Mot de passe |
+|---|---|---|
+| Client (SCI Les Tilleuls : un devis envoyé, un accepté) | `gestion@sci-tilleuls.example.com` | `ClientDemo2026` |
+
+Ces identifiants s'affichent aussi sur la page **Espace client** (lien dans
+le menu). Données fictives : le compte gérant, lui, n'a pas de mot de passe
+par défaut. La commande ne fait rien si la base
 contient déjà des clients ; `flask seed --reset` vide les tables (comptes
 clients compris, le compte du gérant est gardé) puis réinsère les données.
 
