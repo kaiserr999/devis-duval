@@ -107,6 +107,7 @@ h2 { font-size: 1.15rem; margin: 0; }
 /* --- Alertes --- */
 .alerte {
   margin: 0; padding: 0.75rem 1rem; border-radius: var(--rayon);
+  overflow-wrap: anywhere;
   border-left: 4px solid;
 }
 .alerte-succes { background: var(--succes-doux); border-color: var(--succes); color: var(--succes); }

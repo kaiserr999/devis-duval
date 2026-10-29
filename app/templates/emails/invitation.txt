@@ -1,0 +1,10 @@
+Bonjour {{ client.nom }},
+
+{{ entreprise.nom }} vous invite à créer votre espace client pour consulter vos devis en ligne. Votre identifiant sera votre adresse email ({{ client.email }}) :
+{{ lien }}
+
+Ce lien est valable {{ jours }} jours.
+
+Cordialement,
+{{ entreprise.nom }}
+{{ entreprise.telephone }} · {{ entreprise.email }}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titre %}Créer mon espace client{% endblock %}
+{% block contenu %}
+<div class="connexion">
+  <h1>Créer mon espace client</h1>
+
+  {% if lien_invalide %}
+  <p class="alerte alerte-erreur" role="alert">{{ lien_invalide }}</p>
+  <p class="sous-titre">
+    {{ entreprise.nom }} : {{ entreprise.telephone }} ·
+    <a href="mailto:{{ entreprise.email }}">{{ entreprise.email }}</a>
+  </p>
+  <p><a href="{{ url_for('auth.connexion') }}">J'ai déjà un compte : me connecter</a></p>
+  {% else %}
+  <p class="sous-titre">
+    Bonjour {{ client.nom }}, choisissez un mot de passe pour consulter vos
+    devis {{ entreprise.nom }} en ligne.
+  </p>
+
+  {% if erreur %}<p class="alerte alerte-erreur" role="alert">{{ erreur }}</p>{% endif %}
+
+  <form class="carte" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="champ">
+      <label for="email">Email (votre identifiant)</label>
+      <input id="email" type="email" value="{{ email }}" readonly autocomplete="username">
+    </div>
+    <div class="champ">
+      <label for="mot_de_passe">Mot de passe</label>
+      <input id="mot_de_passe" name="mot_de_passe" type="password" required minlength="10"
+             autocomplete="new-password" autofocus aria-describedby="aide-mdp">
+      <p class="aide" id="aide-mdp">10 caractères minimum.</p>
+    </div>
+    <div class="champ">
+      <label for="confirmation">Confirmer le mot de passe</label>
+      <input id="confirmation" name="confirmation" type="password" required minlength="10"
+             autocomplete="new-password">
+    </div>
+    <button class="bouton" type="submit">Créer mon compte</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

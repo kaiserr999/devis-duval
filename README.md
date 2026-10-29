@@ -16,17 +16,22 @@ en PDF, prêt à être envoyé au client.
 ## Fonctionnalités
 
 - **Clients** : liste, fiche avec l'historique des devis, création,
-  modification, suppression (refusée si le client a des devis).
+  modification, suppression (refusée si le client a des devis). Un client
+  doit avoir **au moins un email ou un téléphone**.
 - **Devis** : création avec ajout de lignes et total estimé en direct,
   numéro automatique (`D-2026-0001`), filtre par statut.
 - **Cycle de vie** : brouillon → envoyé → accepté ou refusé. Un devis
   envoyé n'est plus modifiable ni supprimable.
+- **Envoi par email** : quand un devis passe à « envoyé », le client le
+  reçoit par email (PDF joint) avec un lien pour créer son espace client.
+- **Espace client** : le client crée son compte avec son email, puis
+  consulte ses devis (sauf les brouillons) et les télécharge en PDF.
 - **PDF** : en-tête de l'entreprise, client, lignes, total, date de
   validité, cadre « Bon pour accord » ([exemple](docs/exemple-devis.pdf)).
-- **Connexion du gérant** : toute l'application et l'API sont protégées,
-  mot de passe haché.
+- **Connexion** du gérant et des clients : chacun ne voit que ses pages,
+  mots de passe hachés.
 - **API REST JSON** documentée avec Swagger (`/apidocs/`).
-- **Qualité** : plus de 160 tests pytest, style pycodestyle, CI GitHub
+- **Qualité** : plus de 200 tests pytest, style pycodestyle, CI GitHub
   Actions (tests + build Docker).
 
 | Détail d'un devis | Création / modification |
@@ -51,14 +56,19 @@ app/
   config.py          Config (lit .env) / TestConfig (SQLite mémoire)
   extensions.py      SQLAlchemy (+ PRAGMA foreign_keys), Migrate, CSRFProtect, LoginManager
   models/            Client, Devis, LigneDevis, Utilisateur
-  auth.py            connexion du gérant (Flask-Login) + commande flask creer-gerant
+  auth.py            connexion (Flask-Login), création du compte client, droits
+                     d'accès + commande flask creer-gerant
+  espace.py          espace client : ses devis, détail, PDF
+  invitations.py     lien signé de création du compte client
+  notifications.py   emails aux clients (devis envoyé, invitation)
+  emails.py          envoi SMTP, ou affichage dans le terminal sans serveur
   errors.py          erreurs HTTP : JSON sous /api/, page HTML ailleurs
   routes/health.py   GET /api/health
   routes/clients.py  CRUD /api/clients
   routes/devis.py    /api/devis : lignes, totaux, statuts
   pages/             interface web (clients, devis) qui réutilise les règles de routes/
   pdf.py             génération du devis en PDF (xhtml2pdf)
-  templates/         templates Jinja (base, clients/, devis/, erreur)
+  templates/         templates Jinja (base, clients/, devis/, espace/, emails/, erreur)
   static/style.css   styles de l'interface
   seed.py            commande flask seed (données de démo)
   swagger.py         config Flasgger + schémas OpenAPI partagés
@@ -77,8 +87,10 @@ render.yaml          déploiement sur Render
 | `clients`      | id, nom (obligatoire), email, telephone, adresse, cree_le                 |
 | `devis`        | id, client_id → clients, numero (unique), date_creation, statut, total    |
 | `lignes_devis` | id, devis_id → devis (ON DELETE CASCADE), description, quantite, prix_unitaire, sous_total |
-| `utilisateurs` | id, email (unique), mot_de_passe_hash, cree_le                            |
+| `utilisateurs` | id, email (unique), mot_de_passe_hash, cree_le, client_id → clients (unique, ON DELETE CASCADE) |
 
+- `utilisateurs.client_id` vide : compte du gérant ; rempli : compte de
+  l'espace client de ce client (un seul compte par client).
 - Montants en `DECIMAL(10,2)` et `decimal.Decimal` en Python, jamais en float.
 - `CHECK (quantite > 0)` et `CHECK (prix_unitaire >= 0)`.
 - `statut` ∈ brouillon / envoye / accepte / refuse (défaut : brouillon).
@@ -111,8 +123,9 @@ Corps attendu pour `POST` et `PUT` :
 }
 ```
 
-- `nom` est obligatoire (120 caractères max) ; `email` (120), `telephone`
-  (30) et `adresse` (255) sont facultatifs. Les espaces autour sont retirés.
+- `nom` est obligatoire (120 caractères max), ainsi qu'**au moins un** des
+  champs `email` (120) et `telephone` (30) ; `adresse` (255) est
+  facultatif. Les espaces autour sont retirés.
 - `id`, `cree_le` et les champs inconnus sont ignorés.
 - Erreurs : **400** (JSON absent ou champ invalide), **404** (client
   introuvable), **409** (suppression d'un client qui a des devis).
@@ -164,6 +177,10 @@ Règles :
   ```
 
 - Un devis sans ligne ne peut pas être envoyé.
+- Un devis ne peut être ni créé ni envoyé pour un client sans email ni
+  téléphone (clients enregistrés avant cette règle).
+- Passage à `envoye` : si le client a un email, le devis lui est envoyé
+  par email (voir [Espace client](#espace-client-et-emails)).
 - Un devis qui n'est plus en brouillon ne peut plus être modifié ni
   supprimé.
 - Erreurs : **400** (données invalides, client inexistant), **404** (devis
@@ -216,6 +233,9 @@ Une fois le serveur lancé, ouvrir http://localhost:5000/ :
 | Liste des clients | `/clients` |
 | Fiche client (coordonnées + ses devis) | `/clients/<id>` |
 | Nouveau / modifier un client | `/clients/nouveau`, `/clients/<id>/modifier` |
+| **Client** : création du compte (lien reçu par email) | `/activation/<jeton>` |
+| **Client** : mes devis | `/espace/` |
+| **Client** : détail et PDF d'un devis | `/espace/devis/<id>`, `/espace/devis/<id>/pdf` |
 
 Les pages appliquent **les mêmes règles que l'API** (validation, total calculé
 par le serveur, cycle des statuts) : elles appellent les fonctions de
@@ -235,15 +255,20 @@ dans `Config.ENTREPRISE` et `Config.DEVIS_VALIDITE_JOURS` (`app/config.py`).
 
 ## Connexion du gérant
 
-Toute l'application est réservée au gérant connecté (Flask-Login) :
+Toute l'application est réservée aux personnes connectées (Flask-Login) :
 
 - **Pages** : sans session, redirection vers `/connexion`, puis retour à la
   page demandée après connexion (seules les adresses locales sont acceptées).
 - **API** : sans session, `401 {"erreur": "Authentification requise."}`.
-- **Restent publics** : `/api/health` (supervision, CI), `/connexion`, les
-  fichiers statiques et la doc Swagger.
+- **Clients** : un compte client n'accède qu'à `/espace/` (les pages du
+  gérant le renvoient vers son espace, l'API répond `403`). Le gérant, lui,
+  n'a pas accès à `/espace/`.
+- **Restent publics** : `/api/health` (supervision, CI), `/connexion`, la
+  création du compte client (`/activation/<jeton>`), les fichiers
+  statiques et la doc Swagger.
 
-Le compte se crée en ligne de commande, il n'y a pas de page d'inscription :
+Le compte du gérant se crée en ligne de commande, il n'y a pas de page
+d'inscription :
 
 ```bash
 flask creer-gerant gerant@duval.fr   # crée le compte, ou change son mot de passe
@@ -255,6 +280,41 @@ connexion affiche le même message que l'email existe ou non. La déconnexion
 se fait par un `POST` protégé par jeton CSRF. Le cookie de session n'est pas
 lisible en JavaScript (`HttpOnly`), est en `SameSite=Lax`, et en HTTPS
 seulement si `SESSION_COOKIE_SECURE=1`.
+
+## Espace client et emails
+
+1. Le gérant crée le client avec son email, puis un devis.
+2. Il clique sur **Marquer comme envoyé** : le client reçoit un email avec
+   le devis en PDF et un lien **Créer mon espace client**. Le bouton
+   **Envoyer l'invitation par email** de la fiche client envoie le même
+   lien sans devis.
+3. Le client choisit un mot de passe (10 caractères minimum). Son
+   identifiant est son email.
+4. Il se connecte ensuite sur `/connexion` et arrive sur **Mes devis**
+   (`/espace/`) : ses devis envoyés, acceptés et refusés, avec le détail et
+   le PDF. Les brouillons et les devis des autres clients restent invisibles.
+
+Le lien contient un jeton signé avec `SECRET_KEY` (itsdangerous) : il est
+valable 30 jours (`INVITATION_VALIDITE_JOURS`), ne sert qu'une fois (le
+compte existe ensuite) et devient invalide si l'email du client change.
+Si le client a déjà un compte, l'email contient simplement le lien de
+connexion. Un client avec seulement un téléphone ne reçoit pas d'email : la
+page le signale au gérant.
+
+**Sans serveur d'email** (`MAIL_SERVER` vide, le cas en local) : rien
+n'est envoyé. L'email complet s'affiche dans le terminal où tourne
+l'application, et le lien du client s'affiche dans la page du gérant :
+on peut l'ouvrir dans une fenêtre de navigation privée pour tester.
+
+**Pour envoyer de vrais emails**, remplir dans `.env` (ou dans les
+variables d'environnement de Render) :
+
+| Variable | Exemple |
+|---|---|
+| `MAIL_SERVER` | `smtp.gmail.com` |
+| `MAIL_PORT` | `587` (STARTTLS) ou `465` avec `MAIL_USE_SSL=1` |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | identifiants SMTP (Gmail : mot de passe d'application) |
+| `MAIL_EXPEDITEUR` | adresse d'expédition (par défaut celle de `Config.ENTREPRISE`) |
 
 ## Documentation de l'API (Swagger)
 
@@ -273,8 +333,8 @@ partagés (`Client`, `Devis`, `Ligne`, `Erreur`...) sont dans `app/swagger.py`.
 
 `flask seed` insère 4 clients et 5 devis (12 lignes) dans la base, avec des
 totaux calculés par `calculer_total()`. La commande ne fait rien si la base
-contient déjà des clients ; `flask seed --reset` vide les tables puis
-réinsère les données.
+contient déjà des clients ; `flask seed --reset` vide les tables (comptes
+clients compris, le compte du gérant est gardé) puis réinsère les données.
 
 Avec Docker : `docker compose exec web flask seed`.
 
@@ -306,6 +366,7 @@ Modèle : [.env.example](.env.example).
 | `DATABASE_URL` | Optionnel, SQLite `instance/devis.db` par défaut. |
 | `SEED_DEMO` | Docker seulement : `1` pour insérer les données de démo au démarrage. |
 | `GERANT_EMAIL`, `GERANT_MOT_DE_PASSE` | Docker seulement : compte du gérant créé au démarrage. |
+| `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_USE_TLS`, `MAIL_USE_SSL`, `MAIL_EXPEDITEUR` | Optionnels : serveur SMTP pour les emails aux clients (voir [Espace client](#espace-client-et-emails)). |
 
 Générer une clé : `python -c "import secrets; print(secrets.token_hex(32))"`
 
@@ -375,8 +436,11 @@ pycodestyle .
 
 - **Pas de TVA** : le devis affiche un total unique, sans distinction HT,
   TVA et TTC.
-- **Un seul rôle** : tous les comptes sont des comptes gérant, il n'y a pas
-  de gestion des droits.
+- **Deux rôles seulement** : gérant (tout) et client (ses devis). Pas de
+  « mot de passe oublié » pour les clients : le gérant ne peut que renvoyer
+  le lien tant que le compte n'existe pas.
+- **Acceptation hors ligne** : le client consulte ses devis en ligne mais
+  les accepte encore en renvoyant le PDF signé ; le gérant change le statut.
 - **SQLite** : suffisant pour un gérant seul ; plusieurs utilisateurs
   simultanés demanderaient PostgreSQL.
 - **Démo gratuite** : base recréée à chaque redémarrage (voir

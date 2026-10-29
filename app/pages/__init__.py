@@ -1,7 +1,7 @@
 """Interface web (templates Jinja) pour le gérant."""
 from decimal import Decimal
 
-from flask import Blueprint, redirect, url_for
+from flask import Blueprint, current_app, redirect, url_for
 from werkzeug.exceptions import HTTPException
 
 from app.extensions import db
@@ -55,7 +55,8 @@ def date_fr(moment):
 
 @pages_bp.app_context_processor
 def variables_communes():
-    return {"LIBELLES_STATUT": LIBELLES_STATUT}
+    return {"LIBELLES_STATUT": LIBELLES_STATUT,
+            "entreprise": current_app.config["ENTREPRISE"]}
 
 
 @pages_bp.get("/")

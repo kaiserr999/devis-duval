@@ -58,7 +58,12 @@ def create_app(config_class=Config):
     from app.pages import pages_bp
     app.register_blueprint(pages_bp)
 
-    # Connexion du gérant : pages et API réservées (voir app/auth.py)
+    # Espace client : chaque client consulte ses devis (voir app/espace.py)
+    from app.espace import espace_bp
+    app.register_blueprint(espace_bp)
+
+    # Connexion du gérant et des clients : chacun n'accède qu'à ses pages
+    # (voir app/auth.py)
     from app.auth import auth_bp, creer_gerant_command, exiger_connexion
     login_manager.init_app(app)
     app.register_blueprint(auth_bp)

@@ -3,6 +3,7 @@ from flask import flash, redirect, render_template, request, url_for
 
 from app.extensions import db
 from app.models import Client, Devis
+from app.notifications import inviter_client
 from app.pages import essayer, pages_bp
 from app.routes.clients import CHAMPS, supprimer, trouver_client, \
     valider_client
@@ -66,6 +67,17 @@ def modifier_client(client_id):
         setattr(client, champ, valeur)
     db.session.commit()
     flash("Client modifié.", "succes")
+    return redirect(url_for("pages.fiche_client", client_id=client.id))
+
+
+@pages_bp.post("/clients/<int:client_id>/inviter")
+def inviter(client_id):
+    """Envoie (ou renvoie) au client le lien de création de son espace."""
+    client = trouver_client(client_id)
+    if client.compte is not None:
+        flash(f"{client.nom} a déjà un compte client.", "info")
+    else:
+        flash(*inviter_client(client).message())
     return redirect(url_for("pages.fiche_client", client_id=client.id))
 
 

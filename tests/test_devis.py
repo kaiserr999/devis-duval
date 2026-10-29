@@ -18,7 +18,7 @@ LIGNES = [
 @pytest.fixture
 def mme_martin(app):
     """Un client enregistré."""
-    client = Client(nom="Mme Martin")
+    client = Client(nom="Mme Martin", telephone="06 00 00 00 00")
     db.session.add(client)
     db.session.commit()
     return client
@@ -138,7 +138,7 @@ def test_creer_sans_json(client):
 # --- Liste et lecture ----------------------------------------------------
 
 def test_lister_et_filtrer(client, creer, mme_martin):
-    autre = Client(nom="M. Durand")
+    autre = Client(nom="M. Durand", email="durand@example.com")
     db.session.add(autre)
     db.session.commit()
     premier = creer()

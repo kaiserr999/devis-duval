@@ -36,7 +36,17 @@
 </div>
 
 {% if devis.statut == 'brouillon' %}
-<p class="aide">Brouillon : modifiable. Une fois envoyé, le devis ne peut plus être modifié ni supprimé.</p>
+<p class="aide">
+  Brouillon : modifiable. Une fois envoyé, le devis ne peut plus être modifié ni supprimé.
+  {% if devis.client.email %}
+  En le marquant comme envoyé, il part par email à {{ devis.client.email }} (PDF joint)
+  avec un lien vers l'espace client.
+  {% elif devis.client.telephone %}
+  Ce client n'a pas d'email : prévenez-le par téléphone ({{ devis.client.telephone }}).
+  {% else %}
+  Ce client n'a ni email ni téléphone : <a href="{{ url_for('pages.modifier_client', client_id=devis.client_id) }}">complétez sa fiche</a> avant d'envoyer le devis.
+  {% endif %}
+</p>
 {% endif %}
 
 <div class="tableau-defilant">
